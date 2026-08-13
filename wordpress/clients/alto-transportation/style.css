@@ -1,0 +1,30 @@
+/*
+Theme Name: Alto Private Transportation
+Template: klickspark-base
+Author: KlickSpark Media
+Description: Client child theme for Alto Private Transportation — fixed-price, flight-tracked airport transfers out of Orlando International (MCO). Identity only — no logic lives here.
+Version: 1.0.0
+*/
+
+/* Same fonts as the marketing site (src/styles/fonts.css in the repo root). */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/*
+ * The parent's block CSS (blocks/booking-form/style.css) reads a raw
+ * --ks-radius custom property with a 6px fallback — it isn't wired to
+ * theme.json's settings.custom.radius. Alto's own design system is built on
+ * sharp, near-square corners (theme.css: --radius: 0.25rem, and most
+ * components use Tailwind's rounded-sm on top of that, i.e. ~0-2px), so this
+ * bridges the two rather than shipping the parent's default 6px everywhere.
+ */
+:root {
+	--ks-radius: 2px;
+}
+
+/* Prices, route codes, dates and other tabular data read as data in the
+ * live site's mono typeface, not the body font. */
+.ks-option__price,
+.ks-option__cap {
+	font-family: var(--wp--preset--font-family--mono);
+	font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "color": {
+      "palette": [
+        { "slug": "base", "color": "#F4F1EB", "name": "Base" },
+        { "slug": "contrast", "color": "#0D1B2E", "name": "Contrast" },
+        { "slug": "primary", "color": "#B8720A", "name": "Primary" },
+        { "slug": "secondary", "color": "#EAE7DF", "name": "Secondary" },
+        { "slug": "surface", "color": "#E2DED5", "name": "Surface" }
+      ]
+    },
+    "typography": {
+      "fontFamilies": [
+        { "slug": "display", "name": "Display", "fontFamily": "\"Outfit\", system-ui, sans-serif" },
+        { "slug": "body", "name": "Body", "fontFamily": "\"DM Sans\", system-ui, sans-serif" },
+        { "slug": "mono", "name": "Mono", "fontFamily": "\"JetBrains Mono\", monospace" }
+      ]
+    },
+    "custom": { "radius": "2px" }
+  },
+  "styles": {
+    "typography": { "fontFamily": "var(--wp--preset--font-family--body)" },
+    "elements": {
+      "heading": { "typography": { "fontFamily": "var(--wp--preset--font-family--display)", "fontWeight": "700" } },
+      "button": { "typography": { "fontFamily": "var(--wp--preset--font-family--body)" } }
+    }
+  }
+}

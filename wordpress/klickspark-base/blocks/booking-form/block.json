@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ks/booking-form",
+  "title": "Booking form",
+  "category": "widgets",
+  "icon": "calendar-alt",
+  "description": "Route, date and vehicle selection that hands off to WooCommerce checkout.",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"],
+    "spacing": { "padding": true, "margin": true },
+    "color": { "background": true, "text": true }
+  },
+  "attributes": {
+    "heading": { "type": "string", "default": "Book your transfer" },
+    "showStops": { "type": "boolean", "default": true }
+  },
+  "textdomain": "ks-base",
+  "render": "file:./render.php",
+  "viewScript": "file:./view.js",
+  "style": "file:./style.css"
+}

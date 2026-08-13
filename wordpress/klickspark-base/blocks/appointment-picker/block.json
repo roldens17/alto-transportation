@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ks/appointment-picker",
+  "title": "Appointment picker",
+  "category": "widgets",
+  "icon": "calendar-alt",
+  "description": "Service, practitioner and time selection against real availability.",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"],
+    "spacing": { "padding": true, "margin": true },
+    "color": { "background": true, "text": true }
+  },
+  "attributes": {
+    "heading": { "type": "string", "default": "Book an appointment" },
+    "serviceId": { "type": "number", "default": 0 },
+    "practitionerId": { "type": "number", "default": 0 },
+    "days": { "type": "number", "default": 14 }
+  },
+  "textdomain": "ks-base",
+  "render": "file:./render.php",
+  "viewScript": "file:./view.js",
+  "style": "file:./style.css"
+}

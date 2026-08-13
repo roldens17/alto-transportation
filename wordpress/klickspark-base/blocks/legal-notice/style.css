@@ -1,0 +1,28 @@
+.ks-notice { margin-block: var(--wp--preset--spacing--50, 1.75rem); }
+.ks-notice__text { margin: 0; }
+.ks-notice__meta { margin: 0.5rem 0 0; font-size: 0.8125rem; opacity: 0.75; }
+
+/* The disclaimer as a rubber stamp: it stops being fine print and starts being
+   the most honest element on the page. */
+.ks-notice--stamp {
+	max-width: 34rem;
+	padding: 1.1rem 1.25rem;
+	border: 2px solid var(--wp--preset--color--stamp, currentColor);
+	border-radius: 2px;
+	color: var(--wp--preset--color--stamp, currentColor);
+	transform: rotate(-1.2deg);
+}
+
+.ks-notice--stamp .ks-notice__text {
+	font-family: var(--wp--preset--font-family--mono, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.55;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.ks-notice--stamp .ks-notice__meta { font-family: var(--wp--preset--font-family--mono, monospace); font-size: 0.75rem; }
+
+.ks-notice--footer { font-size: 0.8125rem; opacity: 0.7; }
+
+@media (max-width: 600px) { .ks-notice--stamp { transform: none; } }

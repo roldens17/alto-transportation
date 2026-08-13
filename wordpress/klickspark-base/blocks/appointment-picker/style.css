@@ -1,0 +1,108 @@
+/* Structure only. Identity comes from the child theme's theme.json. */
+
+.ks-appt { display: grid; gap: var(--wp--preset--spacing--50, 1.75rem); }
+
+.ks-appt__progress {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.25rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-family: var(--wp--preset--font-family--mono, monospace);
+	font-size: 0.75rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.ks-appt__progress li { opacity: 0.4; counter-increment: ks-step; }
+.ks-appt__progress li::before { content: counter(ks-step, decimal-leading-zero) " "; }
+.ks-appt__progress li.is-current { opacity: 1; font-weight: 700; }
+.ks-appt__progress li.is-done { opacity: 0.7; }
+
+.ks-appt__cards {
+	display: grid;
+	gap: 0.75rem;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.ks-card {
+	display: grid;
+	gap: 0.3rem;
+	padding: 1rem;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+	border-radius: var(--ks-radius, 6px);
+}
+
+.ks-card.is-selected {
+	border-color: var(--wp--preset--color--primary, currentColor);
+	box-shadow: inset 0 0 0 1px var(--wp--preset--color--primary, currentColor);
+}
+
+.ks-card__name { font-weight: 600; }
+.ks-card__meta { font-size: 0.8125rem; opacity: 0.75; }
+.ks-card__desc { font-size: 0.875rem; opacity: 0.85; }
+.ks-card__avatar { width: 3rem; height: 3rem; border-radius: 50%; object-fit: cover; }
+
+.ks-num { font-family: var(--wp--preset--font-family--mono, monospace); font-variant-numeric: tabular-nums; }
+
+.ks-appt__days { display: grid; gap: 1.25rem; }
+.ks-day__label { margin: 0 0 0.5rem; font-size: 0.9375rem; }
+.ks-day__times { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.ks-slot {
+	padding: 0.5rem 0.75rem;
+	font-family: var(--wp--preset--font-family--mono, monospace);
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+	color: inherit;
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+	border-radius: calc(var(--ks-radius, 6px) / 1.5);
+}
+
+.ks-slot.is-selected {
+	background: var(--wp--preset--color--primary, currentColor);
+	color: var(--wp--preset--color--base, #fff);
+	border-color: transparent;
+}
+
+.ks-appt__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0; }
+.ks-appt__note { margin: 0; font-size: 0.8125rem; opacity: 0.7; }
+
+.ks-appt__feedback:empty { display: none; }
+.ks-appt__feedback { padding: 0.75rem 0.9rem; border-radius: var(--ks-radius, 6px); }
+.ks-appt__feedback.is-error { background: color-mix(in srgb, var(--ks-error, #b3261e) 12%, transparent); }
+
+.ks-appt :focus-visible { outline: 3px solid var(--wp--preset--color--primary, currentColor); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+	.ks-appt * { animation: none !important; transition: none !important; }
+}
+
+/* Details / intake step (no-payment flow). */
+.ks-appt__fields,
+.ks-appt__intake { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+.ks-appt__intake { margin-top: 0.9rem; grid-template-columns: 1fr; }
+.ks-field { display: grid; gap: 0.3rem; margin: 0; }
+.ks-field label { font-size: 0.875rem; font-weight: 600; }
+.ks-field--check { grid-template-columns: 1fr; }
+.ks-field--check label { display: flex; gap: 0.55rem; align-items: flex-start; font-weight: 400; font-size: 0.875rem; }
+.ks-appt input, .ks-appt select, .ks-appt textarea {
+	width: 100%;
+	padding: 0.65rem 0.8rem;
+	font: inherit;
+	color: inherit;
+	background: var(--wp--preset--color--base, #fff);
+	border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+	border-radius: var(--ks-radius, 6px);
+}
+.ks-appt input[type="checkbox"] { width: auto; }
+.ks-appt__chosen { margin: 0 0 1.25rem; font-family: var(--wp--preset--font-family--mono, monospace); font-size: 0.8125rem; }
+.ks-appt__consent { margin-block: 1.5rem; }

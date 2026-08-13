@@ -1,0 +1,103 @@
+/**
+ * Structure only. Colour, radius, type and spacing come from theme.json
+ * presets, so each client site looks like itself without editing this file.
+ */
+
+.ks-booking {
+	--ks-gap: var(--wp--preset--spacing--40, 1rem);
+	display: grid;
+	gap: var(--ks-gap);
+}
+
+.ks-booking__grid {
+	display: grid;
+	gap: var(--ks-gap);
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.ks-field { display: grid; gap: 0.35rem; margin: 0; }
+.ks-field--inline { grid-template-columns: auto 6rem 1fr; align-items: center; gap: 0.75rem; }
+.ks-field label { font-size: 0.875rem; font-weight: 600; }
+.ks-field__hint { font-size: 0.8125rem; opacity: 0.7; }
+
+.ks-booking select,
+.ks-booking input {
+	width: 100%;
+	padding: 0.7rem 0.85rem;
+	font: inherit;
+	color: inherit;
+	background: var(--wp--preset--color--base, #fff);
+	border: 1px solid currentColor;
+	border-radius: var(--ks-radius, 6px);
+}
+
+.ks-booking .has-error { outline: 2px solid var(--ks-error, #b3261e); outline-offset: 1px; }
+
+.ks-booking__triptype { display: flex; flex-wrap: wrap; gap: 1rem; border: 0; padding: 0; margin: 0; }
+.ks-booking__triptype legend { font-size: 0.875rem; font-weight: 600; padding: 0 0 0.35rem; }
+.ks-booking__triptype label { display: flex; align-items: center; gap: 0.4rem; }
+
+.ks-booking__return { display: grid; gap: var(--ks-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+
+.ks-booking__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0; }
+
+.ks-btn {
+	padding: 0.8rem 1.4rem;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid currentColor;
+	border-radius: var(--ks-radius, 6px);
+	background: transparent;
+	color: inherit;
+}
+
+.ks-btn--primary {
+	background: var(--wp--preset--color--primary, currentColor);
+	color: var(--wp--preset--color--base, #fff);
+	border-color: transparent;
+}
+
+.ks-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.ks-booking__options { display: grid; gap: 0.75rem; }
+
+.ks-option {
+	display: grid;
+	grid-template-columns: minmax(0, 6rem) 1fr auto;
+	align-items: center;
+	gap: 1rem;
+	width: 100%;
+	padding: 0.75rem;
+	text-align: left;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+	border-radius: var(--ks-radius, 6px);
+}
+
+.ks-option.is-selected { border-color: var(--wp--preset--color--primary, currentColor); border-width: 2px; }
+.ks-option__img { width: 100%; height: auto; border-radius: calc(var(--ks-radius, 6px) / 1.5); }
+.ks-option__body { display: grid; gap: 0.15rem; }
+.ks-option__class { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; }
+.ks-option__name { font-weight: 600; }
+.ks-option__cap { font-size: 0.8125rem; opacity: 0.75; }
+.ks-option__price { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+
+.ks-booking__feedback:empty { display: none; }
+.ks-booking__feedback { padding: 0.75rem 0.9rem; border-radius: var(--ks-radius, 6px); }
+.ks-booking__feedback.is-error { background: color-mix(in srgb, var(--ks-error, #b3261e) 12%, transparent); }
+
+.ks-booking :focus-visible { outline: 3px solid var(--wp--preset--color--primary, currentColor); outline-offset: 2px; }
+
+@media (max-width: 480px) {
+	.ks-option { grid-template-columns: 1fr auto; }
+	.ks-option__img { display: none; }
+	.ks-field--inline { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ks-booking * { animation: none !important; transition: none !important; }
+}

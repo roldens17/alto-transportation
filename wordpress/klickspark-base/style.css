@@ -1,0 +1,13 @@
+/*
+Theme Name: KlickSpark Base
+Theme URI: https://klicksparkmedia.com
+Author: KlickSpark Media
+Description: Block-theme parent for client sites. Content model, booking engine and WooCommerce integration live here. Visual identity lives in the child theme.
+Version: 0.1.0
+Requires at least: 6.5
+Requires PHP: 8.1
+Text Domain: ks-base
+Tags: block-theme, full-site-editing
+*/
+
+/* Parent ships no opinionated styling on purpose. Style via child theme.json + child style.css. */
