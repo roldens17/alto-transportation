@@ -722,7 +722,7 @@ export default function App() {
               className="text-primary-foreground/25 text-[10px] mt-8"
               style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
-              © 2024 Alto Private Transportation
+              © {new Date().getFullYear()} Alto Private Transportation
             </p>
           </div>
         </div>
