@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Plane, Shield, Lock, CheckCircle, ChevronDown, ArrowRight, Users, Clock } from "lucide-react";
+import { Phone, Plane, Shield, Lock, CheckCircle, ChevronDown, ArrowRight } from "lucide-react";
 
 const ROUTES = [
   { id: "wdw",       label: "Walt Disney World",  code: "MCO→WDW", price: 115 },
