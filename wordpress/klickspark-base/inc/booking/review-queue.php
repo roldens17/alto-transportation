@@ -45,7 +45,7 @@ class KS_Review_Queue {
 			<p>Requests awaiting owner approval. A request is not a confirmed appointment.</p>
 
 			<?php if ( isset( $_GET['done'] ) ) : ?>
-				<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'approved' === $_GET['done'] ? 'Confirmed and the client has been emailed.' : 'Declined and the time is back on the calendar.' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'stale' === $_GET['done'] ? 'This request was already handled. No new notification was sent.' : ( 'approved' === $_GET['done'] ? 'Approved; a notification was attempted.' : 'Declined; a notification was attempted.' ) ); ?></p></div>
 			<?php endif; ?>
 
 			<?php if ( ! $pending ) : ?>
@@ -126,10 +126,10 @@ class KS_Review_Queue {
 			exit;
 		}
 
-		if ( 'approve' === $decision ) {
-			KS_Slot_Store::approve( $id );
-		} else {
-			KS_Slot_Store::decline( $id );
+		$changed = 'approve' === $decision ? KS_Slot_Store::approve( $id ) : KS_Slot_Store::decline( $id );
+		if ( ! $changed ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=' . self::SLUG . '&done=stale' ) );
+			exit;
 		}
 
 		self::notify( $row, $decision );
