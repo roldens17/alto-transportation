@@ -44,6 +44,7 @@ services:
       - ks_wp:/var/www/html
       - ./wordpress/klickspark-base:/var/www/html/wp-content/themes/klickspark-base:ro
       - ./generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning:/var/www/html/wp-content/themes/fabulous-cleaning:ro
+      - ./wordpress/clients/fabulous-cleaning/seed.php:/opt/klickspark/seed.php:ro
     entrypoint: ["wp", "--path=/var/www/html"]
   mailpit:
     image: axllent/mailpit:v1.21
