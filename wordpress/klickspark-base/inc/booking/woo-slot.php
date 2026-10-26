@@ -71,8 +71,9 @@ class KS_Slot_Woo {
 		}
 
 		$duration = KS_Slot_Engine::duration( $request->service );
+		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $request->service ) ?: 0 ) );
 		$cart_key = wp_generate_uuid4();
-		$hold     = KS_Slot_Store::hold( $request->practitioner, $request->service, $start, $duration, $cart_key );
+		$hold     = KS_Slot_Store::hold( $request->practitioner, $request->service, $start, $duration + $buffer, $cart_key );
 
 		if ( is_wp_error( $hold ) ) {
 			return $hold;
@@ -84,6 +85,7 @@ class KS_Slot_Woo {
 				'practitioner'   => $request->practitioner,
 				'start'          => $start->format( 'Y-m-d H:i' ),
 				'duration'       => $duration,
+				'buffer'         => $buffer,
 				'price'          => KS_Slot_Engine::price( $request->service ),
 				'appointment_id' => $hold,
 				'cart_key'       => $cart_key,
@@ -124,8 +126,10 @@ class KS_Slot_Woo {
 		}
 
 		foreach ( $cart->get_cart() as $item ) {
-			if ( isset( $item[ self::CART_KEY ]['price'] ) ) {
-				$item['data']->set_price( (float) $item[ self::CART_KEY ]['price'] );
+			if ( isset( $item[ self::CART_KEY ]['service'] ) ) {
+				$service = (int) $item[ self::CART_KEY ]['service'];
+				// Never trust serialized cart prices; use the current server-side ACF value.
+				$item['data']->set_price( max( 0, KS_Slot_Engine::price( $service ) ) );
 			}
 		}
 	}
