@@ -37,7 +37,7 @@ jobs:
         run: bash scripts/klickspark-provision.sh
       - name: Verify theme and content in WordPress
         run: |
-          docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli theme status fabulous-cleaning --field=status | grep -qx active
+          docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli theme is-active fabulous-cleaning
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval 'if (!post_type_exists("ks_service")) { fwrite(STDERR, "Missing service post type\n"); exit(1); }'
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli post list --post_type=page --format=count | grep -Eq '^[1-9][0-9]*$'
       - name: Fetch actual homepage HTML
