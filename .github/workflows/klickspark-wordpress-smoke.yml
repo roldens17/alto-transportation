@@ -45,6 +45,7 @@ jobs:
           docker compose --env-file .env -f docker-compose.klickspark.yml exec -T wordpress mkdir -p /var/www/html/wp-content/mu-plugins
           docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-ci-enable.php wordpress:/var/www/html/wp-content/mu-plugins/quote-ci-enable.php
           docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-intake-smoke.php wordpress:/var/www/html/wp-content/mu-plugins/quote-intake-smoke.php
+          docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval 'if (!ks_module_enabled("quotes")) { fwrite(STDERR, "Quote module config disabled\\n"); exit(1); }'
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval-file /var/www/html/wp-content/mu-plugins/quote-intake-smoke.php
       - name: Fetch actual homepage HTML
         run: |
