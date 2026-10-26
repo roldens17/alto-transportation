@@ -151,7 +151,10 @@ final class KS_Quotes {
 			return new WP_Error( 'ks_photo_storage', 'Private photo storage is not configured.', [ 'status' => 503 ] );
 		}
 		$base = realpath( $base );
-		if ( ! $base || ( $root && ( $base === $root || str_starts_with( $base, $root . DIRECTORY_SEPARATOR ) ) ) ) {
+		$uploads = wp_get_upload_dir();
+		$public_uploads = realpath( $uploads['basedir'] ?? '' );
+		$document_root = realpath( $_SERVER['DOCUMENT_ROOT'] ?? '' );
+		if ( ! $base || ( $root && ( $base === $root || str_starts_with( $base, $root . DIRECTORY_SEPARATOR ) ) ) || ( $document_root && ( $base === $document_root || str_starts_with( $base, $document_root . DIRECTORY_SEPARATOR ) ) ) || ( $public_uploads && ( $base === $public_uploads || str_starts_with( $base, $public_uploads . DIRECTORY_SEPARATOR ) ) ) ) {
 			return new WP_Error( 'ks_photo_storage', 'Private photo storage must be outside the WordPress directory.', [ 'status' => 503 ] );
 		}
 		$dir = $base . '/quote-' . $id . '-' . wp_generate_password( 16, false, false );
@@ -189,7 +192,7 @@ final class KS_Quotes {
 		}
 		nocache_headers();
 		header( 'Content-Type: ' . $photo['mime'] );
-		header( 'Content-Disposition: attachment; filename="project-photo-' . $index . '"' );
+		header( 'Content-Disposition: attachment; filename="project-photo-' . $index . '.' . [ 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp' ][ $photo['mime'] ] . '"' );
 		header( 'X-Content-Type-Options: nosniff' );
 		readfile( $path );
 		exit;
