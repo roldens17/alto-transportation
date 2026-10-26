@@ -4,6 +4,7 @@ on:
     paths:
       - 'generator/**'
       - 'wordpress/klickspark-base/inc/booking/**'
+      - 'tests/php/**'
       - 'clients/**'
       - 'industries/**'
       - 'docker-compose.klickspark.yml'
@@ -46,6 +47,8 @@ jobs:
         run: find generated/fabulous-cleaning -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Lint shared booking PHP
         run: find wordpress/klickspark-base/inc/booking -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Run booking lock contract tests
+        run: php tests/php/slot-lock-test.php
       - name: Lint Fabulous Cleaning content seeder
         run: php -l wordpress/clients/fabulous-cleaning/seed.php
       - name: Verify generated theme and manifest
