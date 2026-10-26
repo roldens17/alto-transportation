@@ -156,7 +156,8 @@ class KS_Intake {
 
 		$start    = $booking->departs_at();
 		$duration = KS_Slot_Engine::duration( $booking->service );
-		$hold     = KS_Slot_Store::hold( $booking->practitioner, $booking->service, $start, $duration, wp_generate_uuid4() );
+		$reservation_key = wp_generate_uuid4();
+		$hold     = KS_Slot_Store::hold( $booking->practitioner, $booking->service, $start, $duration, $reservation_key );
 
 		if ( is_wp_error( $hold ) ) {
 			return self::fail( [ 'date' => $hold->get_error_message() ] );
@@ -169,7 +170,7 @@ class KS_Intake {
 		] );
 
 		if ( is_wp_error( $enquiry_id ) || ! $enquiry_id ) {
-			KS_Slot_Store::decline( $hold );
+			KS_Slot_Store::release( $reservation_key );
 			return self::fail( [ 'form' => 'We could not record that. Call the office and we will book you in.' ] );
 		}
 
@@ -187,7 +188,9 @@ class KS_Intake {
 
 		// No-payment requests always require an explicit owner decision.
 		$needs_review = true;
-		KS_Slot_Store::mark_pending( $hold );
+				if ( ! KS_Slot_Store::mark_pending( $hold ) ) {
+			return self::fail( [ 'form' => 'We could not reserve that time. Please try again.' ], 503 );
+		}
 
 		do_action( 'ks/intake/submitted', $enquiry_id, $hold, $needs_review );
 
