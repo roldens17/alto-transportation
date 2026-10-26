@@ -1,0 +1,54 @@
+name: klickspark-dev
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-wordpress}
+      MARIADB_USER: ${DB_USER:-wordpress}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    volumes: [ks_db:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["127.0.0.1:${KS_PORT:-8080}:80"]
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - ks_wp:/var/www/html
+      - ./wordpress/klickspark-base:/var/www/html/wp-content/themes/klickspark-base:ro
+      - ./generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning:/var/www/html/wp-content/themes/fabulous-cleaning:ro
+  wpcli:
+    image: wordpress:cli-php8.3
+    user: "33:33"
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - ks_wp:/var/www/html
+      - ./wordpress/klickspark-base:/var/www/html/wp-content/themes/klickspark-base:ro
+      - ./generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning:/var/www/html/wp-content/themes/fabulous-cleaning:ro
+    entrypoint: ["wp", "--path=/var/www/html"]
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports: ["127.0.0.1:${MAILPIT_PORT:-8025}:8025"]
+volumes:
+  ks_db:
+  ks_wp:
