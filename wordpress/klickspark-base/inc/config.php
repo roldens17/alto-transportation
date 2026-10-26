@@ -17,6 +17,7 @@ function ks_config_defaults(): array {
 			'fleet'      => true,   // vehicles / bookable resources
 			'places'     => true,   // origins + destinations
 			'activities' => false,
+			'quotes'     => false,
 		],
 
 		/**
