@@ -43,6 +43,8 @@ jobs:
         run: node generator/src/cli.mjs build fabulous-cleaning --force
       - name: Lint generated PHP
         run: find generated/fabulous-cleaning -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Lint Fabulous Cleaning content seeder
+        run: php -l wordpress/clients/fabulous-cleaning/seed.php
       - name: Verify generated theme and manifest
         run: node generator/test/verify-artifact.mjs fabulous-cleaning
       - name: Validate Docker Compose configuration without starting services
