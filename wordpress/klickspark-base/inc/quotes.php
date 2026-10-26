@@ -12,11 +12,14 @@ final class KS_Quotes {
 		add_shortcode( 'klickspark_quote_form', [ __CLASS__, 'form' ] );
 		add_action( 'add_meta_boxes_ks_quote', [ __CLASS__, 'meta_boxes' ] );
 		add_action( 'admin_post_ks_quote_review', [ __CLASS__, 'review' ] );
+		add_filter( 'manage_ks_quote_posts_columns', [ __CLASS__, 'columns' ] );
+		add_action( 'manage_ks_quote_posts_custom_column', [ __CLASS__, 'column_value' ], 10, 2 );
 	}
 	public static function register_type(): void {
 		register_post_type( 'ks_quote', [
 			'labels' => [ 'name' => 'Quote requests', 'singular_name' => 'Quote request' ],
 			'public' => false, 'show_ui' => true, 'show_in_rest' => false,
+			'capability_type' => 'post', 'map_meta_cap' => true,
 			'menu_icon' => 'dashicons-clipboard',
 			'capabilities' => [ 'create_posts' => 'do_not_allow' ],
 			'map_meta_cap' => true, 'supports' => [ 'title' ],
@@ -62,25 +65,35 @@ final class KS_Quotes {
 		}
 		echo '<p><strong>Service:</strong> ' . esc_html( $service ) . '</p>';
 		echo '<p><strong>Description:</strong></p><p>' . nl2br( esc_html( $description ) ) . '</p>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		wp_nonce_field( 'ks_quote_review_' . $post->ID );
-		echo '<input type="hidden" name="action" value="ks_quote_review"><input type="hidden" name="quote_id" value="' . esc_attr( $post->ID ) . '">';
-		echo '<button class="button button-primary" name="decision" value="reviewing">Mark reviewing</button> ';
-		echo '<button class="button" name="decision" value="closed">Close request</button></form>';
+		echo '<p>Review actions: ';
+		foreach ( [ 'reviewing' => 'Mark reviewing', 'closed' => 'Close request' ] as $decision => $label ) {
+			$url = wp_nonce_url( add_query_arg( [ 'action' => 'ks_quote_review', 'quote_id' => $post->ID, 'decision' => $decision ], admin_url( 'admin-post.php' ) ), 'ks_quote_review_' . $post->ID );
+			echo '<a class="button" style="margin-right:8px" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		}
+		echo '</p>';
 	}
 	public static function review(): void {
-		$id = absint( $_POST['quote_id'] ?? 0 );
+		$id = absint( $_REQUEST['quote_id'] ?? 0 );
 		if ( ! $id || ! current_user_can( 'manage_options' ) || 'ks_quote' !== get_post_type( $id ) ) {
 			wp_die( 'Not allowed.', '', [ 'response' => 403 ] );
 		}
 		check_admin_referer( 'ks_quote_review_' . $id );
-		$decision = sanitize_key( $_POST['decision'] ?? '' );
+		$decision = sanitize_key( $_REQUEST['decision'] ?? '' );
 		if ( ! in_array( $decision, [ 'reviewing', 'closed' ], true ) ) {
 			wp_die( 'Invalid status.', '', [ 'response' => 400 ] );
 		}
 		update_post_meta( $id, '_ks_quote_status', $decision );
 		wp_safe_redirect( get_edit_post_link( $id, 'raw' ) );
 		exit;
+	}
+	public static function columns( array $columns ): array {
+		$columns['ks_quote_status'] = 'Request status';
+		return $columns;
+	}
+	public static function column_value( string $column, int $id ): void {
+		if ( 'ks_quote_status' === $column ) {
+			echo esc_html( get_post_meta( $id, '_ks_quote_status', true ) ?: 'new' );
+		}
 	}
 	public static function submit( WP_REST_Request $request ) {
 		if ( ! wp_verify_nonce( $request->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ) {
