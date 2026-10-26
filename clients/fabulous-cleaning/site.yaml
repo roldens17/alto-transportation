@@ -1,0 +1,31 @@
+client:
+  id: fabulous-cleaning
+  name: Fabulous Cleaning LLC
+  industry: cleaning
+site:
+  timezone: America/New_York
+  locale: en_US
+  title: Fabulous Cleaning
+branding:
+  primary: "#176B66"
+  accent: "#D8F0E9"
+  background: "#FFFFFF"
+  text: "#172C2A"
+modules:
+  booking: true
+  payments: true
+booking:
+  mode: slot
+  resource_type: crew
+  min_lead_hours: 24
+  max_days_ahead: 60
+  require_address: true
+payments:
+  provider: woocommerce
+  currency: USD
+  test_mode: true
+content:
+  contact_email: ""
+  phone: ""
+  address: ""
+  service_area: ""
