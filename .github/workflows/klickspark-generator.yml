@@ -6,6 +6,8 @@ on:
       - 'clients/**'
       - 'industries/**'
       - 'docker-compose.klickspark.yml'
+      - 'scripts/klickspark-provision.sh'
+      - 'wordpress/clients/fabulous-cleaning/seed.php'
       - '.env.klickspark.example'
       - '.github/workflows/klickspark-generator.yml'
   push:
@@ -47,6 +49,8 @@ jobs:
         run: php -l wordpress/clients/fabulous-cleaning/seed.php
       - name: Verify generated theme and manifest
         run: node generator/test/verify-artifact.mjs fabulous-cleaning
+      - name: Check local provisioning shell syntax
+        run: bash -n scripts/klickspark-provision.sh
       - name: Validate Docker Compose configuration without starting services
         run: |
           cp .env.klickspark.example .env
