@@ -71,8 +71,9 @@ class KS_Slot_Woo {
 		}
 
 		$duration = KS_Slot_Engine::duration( $request->service );
+		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $request->service ) ?: 0 ) );
 		$cart_key = wp_generate_uuid4();
-		$hold     = KS_Slot_Store::hold( $request->practitioner, $request->service, $start, $duration, $cart_key );
+		$hold     = KS_Slot_Store::hold( $request->practitioner, $request->service, $start, $duration + $buffer, $cart_key );
 
 		if ( is_wp_error( $hold ) ) {
 			return $hold;
@@ -84,6 +85,7 @@ class KS_Slot_Woo {
 				'practitioner'   => $request->practitioner,
 				'start'          => $start->format( 'Y-m-d H:i' ),
 				'duration'       => $duration,
+				'buffer'         => $buffer,
 				'price'          => KS_Slot_Engine::price( $request->service ),
 				'appointment_id' => $hold,
 				'cart_key'       => $cart_key,
@@ -124,8 +126,10 @@ class KS_Slot_Woo {
 		}
 
 		foreach ( $cart->get_cart() as $item ) {
-			if ( isset( $item[ self::CART_KEY ]['price'] ) ) {
-				$item['data']->set_price( (float) $item[ self::CART_KEY ]['price'] );
+			if ( isset( $item[ self::CART_KEY ]['service'] ) ) {
+				$service = (int) $item[ self::CART_KEY ]['service'];
+				// Never trust serialized cart prices; use the current server-side ACF value.
+				$item['data']->set_price( max( 0, KS_Slot_Engine::price( $service ) ) );
 			}
 		}
 	}
@@ -202,12 +206,16 @@ class KS_Slot_Woo {
 			}
 
 			$start = new DateTimeImmutable( $appointment['start'], wp_timezone() );
-			$end   = $start->modify( '+' . (int) $appointment['duration'] . ' minutes' );
-
 			global $wpdb;
+			// Validate this exact hold and its expiry, not merely any row with the
+			// cart key. Expired holds must not survive a delayed checkout.
 			$still_held = $wpdb->get_var( $wpdb->prepare(
-				"SELECT id FROM " . KS_Slot_Store::table() . " WHERE cart_key = %s AND status IN ('held','confirmed')",
-				$appointment['cart_key']
+				"SELECT id FROM " . KS_Slot_Store::table() . "
+				 WHERE id = %d AND cart_key = %s AND status = 'held'
+				 AND hold_expires_utc > %s",
+				(int) ( $appointment['appointment_id'] ?? 0 ),
+				$appointment['cart_key'],
+				gmdate( 'Y-m-d H:i:s' )
 			) );
 
 			if ( ! $still_held ) {

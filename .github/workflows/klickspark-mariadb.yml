@@ -1,0 +1,42 @@
+name: KlickSpark MariaDB Booking Integration
+on:
+  pull_request:
+    paths:
+      - 'wordpress/klickspark-base/inc/booking/**'
+      - 'tests/php/**'
+      - '.github/workflows/klickspark-mariadb.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  booking-integration:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: test-root-password
+          MARIADB_DATABASE: klickspark
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      KS_TEST_DB_HOST: 127.0.0.1
+      KS_TEST_DB_PORT: '3306'
+      KS_TEST_DB_USER: root
+      KS_TEST_DB_PASSWORD: test-root-password
+      KS_TEST_DB_NAME: klickspark
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PHP MySQL extension
+        run: sudo apt-get update && sudo apt-get install -y php-mysql
+      - name: Lint integration tests
+        run: |
+          php -l tests/php/mariadb-slot-test.php
+          php -l tests/php/mariadb-slot-worker.php
+      - name: Run real MariaDB concurrency tests
+        run: php tests/php/mariadb-slot-test.php
