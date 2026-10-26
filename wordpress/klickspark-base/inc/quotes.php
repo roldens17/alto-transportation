@@ -244,4 +244,4 @@ final class KS_Quotes {
 		return new WP_REST_Response( [ 'ok' => true, 'message' => 'Your quote request was received. We will contact you after reviewing it.' ], 201 );
 	}
 }
-add_action( 'after_setup_theme', [ 'KS_Quotes', 'init' ] );
+KS_Quotes::init();
