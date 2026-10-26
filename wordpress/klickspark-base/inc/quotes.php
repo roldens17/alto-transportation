@@ -21,9 +21,9 @@ final class KS_Quotes {
 		register_post_type( 'ks_quote', [
 			'labels' => [ 'name' => 'Quote requests', 'singular_name' => 'Quote request' ],
 			'public' => false, 'show_ui' => true, 'show_in_rest' => false,
-			'capability_type' => 'post', 'map_meta_cap' => true,
+			'capability_type' => 'post',
 			'menu_icon' => 'dashicons-clipboard',
-			'capabilities' => [ 'create_posts' => 'do_not_allow' ],
+			'capabilities' => [ 'create_posts' => 'do_not_allow', 'edit_posts' => 'manage_options', 'edit_others_posts' => 'manage_options', 'edit_private_posts' => 'manage_options', 'read_private_posts' => 'manage_options', 'delete_posts' => 'manage_options', 'delete_others_posts' => 'manage_options', 'delete_private_posts' => 'manage_options', 'publish_posts' => 'manage_options' ],
 			'map_meta_cap' => true, 'supports' => [ 'title' ],
 		] );
 	}
@@ -122,6 +122,9 @@ final class KS_Quotes {
 		}
 		$input = $files['photos'];
 		$names = (array) ( $input['name'] ?? [] );
+		if ( count( $names ) > 3 ) {
+			return new WP_Error( 'ks_photo_limit', 'Upload up to 3 images.', [ 'status' => 400 ] );
+		}
 		$photos = [];
 		foreach ( $names as $i => $name ) {
 			$error = (int) ( $input['error'][$i] ?? UPLOAD_ERR_NO_FILE );
