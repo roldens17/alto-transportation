@@ -152,7 +152,7 @@ class KS_Slot_Store {
 			$start_utc->format( 'Y-m-d H:i:s' )
 		) );
 
-		return $count > 0;
+		return null === $count || false === $count || (int) $count > 0;
 	}
 
 	/** Busy blocks for a practitioner in a window, in site time. */
