@@ -14,7 +14,7 @@ class KS_Review_Queue {
 	const SLUG = 'ks-review-queue';
 
 	public static function init(): void {
-		if ( ! ks_config( 'booking.conflict_check', false ) ) {
+		if ( 'none' !== ks_config( 'booking.payment', 'woo' ) && ! ks_config( 'booking.conflict_check', false ) ) {
 			return;
 		}
 
@@ -24,12 +24,12 @@ class KS_Review_Queue {
 
 	public static function menu(): void {
 		$pending = count( KS_Slot_Store::by_status( 'pending' ) );
-		$label   = $pending ? sprintf( 'Review queue <span class="update-plugin-count">%d</span>', $pending ) : 'Review queue';
+		$label   = $pending ? sprintf( 'Appointment requests <span class="update-plugin-count">%d</span>', $pending ) : 'Review queue';
 
 		add_menu_page(
 			'Review queue',
 			$label,
-			'edit_posts',
+			'manage_options',
 			self::SLUG,
 			[ self::class, 'render' ],
 			'dashicons-shield-alt',
@@ -42,10 +42,10 @@ class KS_Review_Queue {
 		?>
 		<div class="wrap">
 			<h1>Review queue</h1>
-			<p>Times reserved for a client, awaiting a conflict check. The slot is off the calendar until you decide.</p>
+			<p>Requests awaiting owner approval. A request is not a confirmed appointment.</p>
 
 			<?php if ( isset( $_GET['done'] ) ) : ?>
-				<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'approved' === $_GET['done'] ? 'Confirmed and the client has been emailed.' : 'Declined and the time is back on the calendar.' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><?php echo esc_html( 'stale' === $_GET['done'] ? 'This request was already handled. No new notification was sent.' : ( 'approved' === $_GET['done'] ? 'Approved; a notification was attempted.' : 'Declined; a notification was attempted.' ) ); ?></p></div>
 			<?php endif; ?>
 
 			<?php if ( ! $pending ) : ?>
@@ -58,9 +58,9 @@ class KS_Review_Queue {
 					<tr>
 						<th>When</th>
 						<th>Who</th>
-						<th>Matter</th>
+						<th>Service</th>
 						<th>Contact</th>
-						<th>Intake</th>
+						<th>Details</th>
 						<th>Decision</th>
 					</tr>
 				</thead>
@@ -114,22 +114,22 @@ class KS_Review_Queue {
 	public static function handle(): void {
 		$id = absint( $_POST['appointment'] ?? 0 );
 
-		if ( ! $id || ! current_user_can( 'edit_posts' ) || ! check_admin_referer( 'ks_review_' . $id ) ) {
+		if ( ! $id || ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'ks_review_' . $id ) ) {
 			wp_die( 'Not allowed.' );
 		}
 
 		$decision = 'approve' === ( $_POST['decision'] ?? '' ) ? 'approve' : 'decline';
 		$row      = KS_Slot_Store::get( $id );
 
-		if ( ! $row ) {
+		if ( ! $row || 'pending' !== $row->status ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=' . self::SLUG ) );
 			exit;
 		}
 
-		if ( 'approve' === $decision ) {
-			KS_Slot_Store::approve( $id );
-		} else {
-			KS_Slot_Store::decline( $id );
+		$changed = 'approve' === $decision ? KS_Slot_Store::approve( $id ) : KS_Slot_Store::decline( $id );
+		if ( ! $changed ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=' . self::SLUG . '&done=stale' ) );
+			exit;
 		}
 
 		self::notify( $row, $decision );
@@ -149,18 +149,18 @@ class KS_Review_Queue {
 		$when  = wp_date( 'l j F Y, g:ia', $start->getTimestamp() );
 
 		if ( 'approve' === $decision ) {
-			$subject = 'Consultation confirmed — ' . get_bloginfo( 'name' );
+			$subject = 'Appointment confirmed — ' . get_bloginfo( 'name' );
 			$body    = [
-				"Your consultation is confirmed for $when with " . get_the_title( (int) $row->practitioner_id ) . '.',
+				"Your appointment is confirmed for $when with " . get_the_title( (int) $row->practitioner_id ) . '.',
 				'',
-				ks_config( 'compliance.confirmed_notice', 'Bring any documents you have received, including anything with a receipt or case number on it.' ),
+				ks_config( 'compliance.confirmed_notice', 'Please contact the business if you need to make changes.' ),
 			];
 		} else {
-			$subject = 'We cannot take this matter — ' . get_bloginfo( 'name' );
+			$subject = 'Appointment request declined — ' . get_bloginfo( 'name' );
 			$body    = [
-				"Thank you for contacting us. After checking, we are not able to take this matter, and we have released the $when time.",
+				"Thank you for your request. We cannot confirm the appointment for $when. The requested time has been released.",
 				'',
-				ks_config( 'compliance.declined_notice', 'This is not advice about your case, and no attorney-client relationship was created. If there is a deadline in your matter, please speak with another attorney promptly.' ),
+				ks_config( 'compliance.declined_notice', 'Please contact the business to discuss other available times.' ),
 			];
 		}
 
