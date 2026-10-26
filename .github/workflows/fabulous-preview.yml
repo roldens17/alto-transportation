@@ -12,10 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate standalone HTML exists
+      - name: Validate standalone premium HTML
         run: |
           test -s previews/fabulous-cleaning/index.html
-          grep -q 'DESIGN PREVIEW ONLY' previews/fabulous-cleaning/index.html
+          grep -qi '<!doctype html>' previews/fabulous-cleaning/index.html
+          grep -q 'DESIGN PREVIEW' previews/fabulous-cleaning/index.html
+          grep -q 'Booking Coming Soon' previews/fabulous-cleaning/index.html
       - name: Upload phone-friendly visual preview
         uses: actions/upload-artifact@v4
         with:
