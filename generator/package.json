@@ -1,0 +1,8 @@
+{
+  "name": "@klickspark/generator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {"ks": "./src/cli.mjs"},
+  "scripts": {"test": "node --test"}
+}
