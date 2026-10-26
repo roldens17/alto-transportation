@@ -203,19 +203,20 @@ class KS_Slot_Store {
 	}
 
 	/** Move a hold into the review queue. Used when payment is not the gate. */
-	public static function mark_pending( int $id ): void {
+	public static function mark_pending( int $id ): bool {
 		global $wpdb;
-		$wpdb->update( self::table(), [ 'status' => 'pending', 'hold_expires_utc' => null ], [ 'id' => $id ] );
+		return 1 === $wpdb->update( self::table(), [ 'status' => 'pending', 'hold_expires_utc' => null ], [ 'id' => $id, 'status' => 'held' ] );
 	}
 
-	public static function approve( int $id ): void {
+	/** Compare-and-swap transitions: only one reviewer can decide a pending request. */
+	public static function approve( int $id ): bool {
 		global $wpdb;
-		$wpdb->update( self::table(), [ 'status' => 'confirmed' ], [ 'id' => $id, 'status' => 'pending' ] );
+		return 1 === $wpdb->update( self::table(), [ 'status' => 'confirmed', 'hold_expires_utc' => null ], [ 'id' => $id, 'status' => 'pending' ] );
 	}
 
-	public static function decline( int $id ): void {
+	public static function decline( int $id ): bool {
 		global $wpdb;
-		$wpdb->update( self::table(), [ 'status' => 'cancelled' ], [ 'id' => $id ] );
+		return 1 === $wpdb->update( self::table(), [ 'status' => 'cancelled', 'hold_expires_utc' => null ], [ 'id' => $id, 'status' => 'pending' ] );
 	}
 
 	public static function get( int $id ): ?object {
