@@ -48,7 +48,7 @@ jobs:
       - name: Lint shared booking PHP
         run: find wordpress/klickspark-base/inc/booking -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Run booking lock contract tests
-        run: php tests/php/slot-lock-test.php
+        run: |\n          php tests/php/slot-lock-test.php\n          php tests/php/checkout-hold-test.php
       - name: Lint Fabulous Cleaning content seeder
         run: php -l wordpress/clients/fabulous-cleaning/seed.php
       - name: Verify generated theme and manifest
