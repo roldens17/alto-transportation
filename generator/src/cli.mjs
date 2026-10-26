@@ -153,8 +153,8 @@ ${footer}
   for (const relative of ['style.css', 'templates/front-page.html']) {
     const source = path.join(visualDir, relative);
     if (fs.existsSync(source)) {
-      if (relative === 'style.css') files[relative] += '\\n' + fs.readFileSync(source, 'utf8') + '\\n';
-      else files[relative] = fs.readFileSync(source, 'utf8') + '\\n';
+      if (relative === 'style.css') files[relative] += '\n' + fs.readFileSync(source, 'utf8') + '\n';
+      else files[relative] = fs.readFileSync(source, 'utf8') + '\n';
     }
   }
   for (const [name, contents] of Object.entries(files)) atomicWrite(path.join(themeDir, name), contents);
