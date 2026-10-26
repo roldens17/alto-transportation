@@ -100,28 +100,43 @@ class KS_Slot_Store {
 		$start_utc = $start->setTimezone( new DateTimeZone( 'UTC' ) );
 		$end_utc   = $start_utc->modify( "+{$duration} minutes" );
 
-		// A longer existing appointment can overlap without sharing a start time.
-		if ( self::overlaps( $practitioner, $start_utc, $end_utc ) ) {
-			return new WP_Error( 'slot_taken', 'That time was just taken. Pick another.' );
+		// Serialize every hold attempt for this resource, including different
+		// start times that overlap. MySQL advisory locks are connection-scoped.
+		// A bounded wait fails closed rather than risking a double booking.
+		$lock_name = 'ks_slot_' . md5( self::table() . ':' . $practitioner );
+		$acquired = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 5 ) );
+		if ( 1 !== $acquired ) {
+			return new WP_Error( 'slot_busy', 'Booking is busy. Please try again.' );
 		}
-
-		$ok = $wpdb->insert( self::table(), [
-			'practitioner_id'  => $practitioner,
-			'service_id'       => $service,
-			'start_utc'        => $start_utc->format( 'Y-m-d H:i:s' ),
-			'end_utc'          => $end_utc->format( 'Y-m-d H:i:s' ),
-			'status'           => 'held',
-			'hold_expires_utc' => gmdate( 'Y-m-d H:i:s', time() + self::HOLD_MIN * MINUTE_IN_SECONDS ),
-			'cart_key'         => $cart_key,
-			'created_utc'      => gmdate( 'Y-m-d H:i:s' ),
-		] );
-
-		if ( ! $ok ) {
-			return new WP_Error( 'slot_taken', 'That time was just taken. Pick another.' );
+		try {
+			// Ignore expired holds even if WP-Cron has not cleaned them up.
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM " . self::table() . " WHERE status = 'held'
+				 AND hold_expires_utc IS NOT NULL AND hold_expires_utc < %s",
+				gmdate( 'Y-m-d H:i:s' )
+			) );
+			if ( self::overlaps( $practitioner, $start_utc, $end_utc ) ) {
+				return new WP_Error( 'slot_taken', 'That time was just taken. Pick another.' );
+			}
+			$ok = $wpdb->insert( self::table(), [
+				'practitioner_id'  => $practitioner,
+				'service_id'       => $service,
+				'start_utc'        => $start_utc->format( 'Y-m-d H:i:s' ),
+				'end_utc'          => $end_utc->format( 'Y-m-d H:i:s' ),
+				'status'           => 'held',
+				'hold_expires_utc' => gmdate( 'Y-m-d H:i:s', time() + self::HOLD_MIN * MINUTE_IN_SECONDS ),
+				'cart_key'         => $cart_key,
+				'created_utc'      => gmdate( 'Y-m-d H:i:s' ),
+			] );
+			if ( ! $ok ) {
+				return new WP_Error( 'slot_taken', 'That time was just taken. Pick another.' );
+			}
+			return (int) $wpdb->insert_id;
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 		}
-
-		return (int) $wpdb->insert_id;
 	}
+
 
 	public static function overlaps( int $practitioner, DateTimeImmutable $start_utc, DateTimeImmutable $end_utc ): bool {
 		global $wpdb;
