@@ -10,6 +10,8 @@ final class KS_Quotes {
 		add_action( 'init', [ __CLASS__, 'register_type' ] );
 		add_action( 'rest_api_init', [ __CLASS__, 'routes' ] );
 		add_shortcode( 'klickspark_quote_form', [ __CLASS__, 'form' ] );
+		add_action( 'add_meta_boxes_ks_quote', [ __CLASS__, 'meta_boxes' ] );
+		add_action( 'admin_post_ks_quote_review', [ __CLASS__, 'review' ] );
 	}
 	public static function register_type(): void {
 		register_post_type( 'ks_quote', [
@@ -28,6 +30,7 @@ final class KS_Quotes {
 		] );
 	}
 	public static function form(): string {
+		wp_enqueue_script( 'ks-quote-form', get_template_directory_uri() . '/assets/js/quote-form.js', [], KS_BASE_VERSION, true );
 		$action = esc_url( rest_url( 'ks/v1/quote-request' ) );
 		$nonce = esc_attr( wp_create_nonce( 'wp_rest' ) );
 		return '<form class="ks-quote-form" method="post" enctype="multipart/form-data" action="' . $action . '" data-ks-rest-nonce="' . $nonce . '">'
@@ -36,9 +39,48 @@ final class KS_Quotes {
 			. '<label>Phone <input name="phone" maxlength="40"></label>'
 			. '<label>Service <input name="service" required maxlength="120"></label>'
 			. '<label>Describe the job <textarea name="description" required maxlength="5000"></textarea></label>'
-			. '<label>Project photos (up to 3, JPEG, PNG or WebP; 5 MB each) <input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple></label>'
+			
 			. '<label><input type="checkbox" name="consent" value="1" required> I agree to be contacted about this request.</label>'
-			. '<button type="submit">Request a quote</button></form>';
+			 . '<button type="submit">Request a quote</button><p class="ks-quote-result" role="status" aria-live="polite"></p></form>';
+	}
+
+	public static function meta_boxes(): void {
+		add_meta_box( 'ks_quote_details', 'Request details', [ __CLASS__, 'details' ], 'ks_quote', 'normal', 'high' );
+	}
+	public static function details( WP_Post $post ): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			echo '<p>Administrator access required.</p>';
+			return;
+		}
+		$contact = (array) get_post_meta( $post->ID, '_ks_quote_contact', true );
+		$service = (string) get_post_meta( $post->ID, '_ks_quote_service', true );
+		$description = (string) get_post_meta( $post->ID, '_ks_quote_description', true );
+		$status = (string) get_post_meta( $post->ID, '_ks_quote_status', true );
+		echo '<p><strong>Status:</strong> ' . esc_html( $status ) . '</p>';
+		foreach ( [ 'name' => 'Name', 'email' => 'Email', 'phone' => 'Phone' ] as $key => $label ) {
+			echo '<p><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $contact[ $key ] ?? '' ) . '</p>';
+		}
+		echo '<p><strong>Service:</strong> ' . esc_html( $service ) . '</p>';
+		echo '<p><strong>Description:</strong></p><p>' . nl2br( esc_html( $description ) ) . '</p>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'ks_quote_review_' . $post->ID );
+		echo '<input type="hidden" name="action" value="ks_quote_review"><input type="hidden" name="quote_id" value="' . esc_attr( $post->ID ) . '">';
+		echo '<button class="button button-primary" name="decision" value="reviewing">Mark reviewing</button> ';
+		echo '<button class="button" name="decision" value="closed">Close request</button></form>';
+	}
+	public static function review(): void {
+		$id = absint( $_POST['quote_id'] ?? 0 );
+		if ( ! $id || ! current_user_can( 'manage_options' ) || 'ks_quote' !== get_post_type( $id ) ) {
+			wp_die( 'Not allowed.', '', [ 'response' => 403 ] );
+		}
+		check_admin_referer( 'ks_quote_review_' . $id );
+		$decision = sanitize_key( $_POST['decision'] ?? '' );
+		if ( ! in_array( $decision, [ 'reviewing', 'closed' ], true ) ) {
+			wp_die( 'Invalid status.', '', [ 'response' => 400 ] );
+		}
+		update_post_meta( $id, '_ks_quote_status', $decision );
+		wp_safe_redirect( get_edit_post_link( $id, 'raw' ) );
+		exit;
 	}
 	public static function submit( WP_REST_Request $request ) {
 		if ( ! wp_verify_nonce( $request->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ) {
