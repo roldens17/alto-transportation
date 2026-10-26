@@ -168,7 +168,7 @@ class KS_Intake {
 			'post_title'  => sprintf( '%s — %s', $name, get_the_title( $booking->service ) ),
 		] );
 
-		if ( is_wp_error( $enquiry_id ) ) {
+		if ( is_wp_error( $enquiry_id ) || ! $enquiry_id ) {
 			KS_Slot_Store::decline( $hold );
 			return self::fail( [ 'form' => 'We could not record that. Call the office and we will book you in.' ] );
 		}
@@ -185,14 +185,9 @@ class KS_Intake {
 			'patient_email' => $email,
 		], [ 'id' => $hold ] );
 
-		// Conflict check gate: the time is reserved but nothing is confirmed yet.
-		$needs_review = (bool) ks_config( 'booking.conflict_check', false );
-
-		if ( $needs_review ) {
-			KS_Slot_Store::mark_pending( $hold );
-		} else {
-			KS_Slot_Store::approve( $hold );
-		}
+		// No-payment requests always require an explicit owner decision.
+		$needs_review = true;
+		KS_Slot_Store::mark_pending( $hold );
 
 		do_action( 'ks/intake/submitted', $enquiry_id, $hold, $needs_review );
 
@@ -203,7 +198,7 @@ class KS_Intake {
 			'pending' => $needs_review,
 			'message' => $needs_review
 				? sprintf(
-					'We have reserved %s and started a conflict check. You will get an email confirming within one business day. This is not yet an attorney-client relationship.',
+					'We received your appointment request for %s. Your appointment is not confirmed until the business approves it.',
 					wp_date( 'l j F, g:ia', $start->getTimestamp() )
 				)
 				: sprintf( 'You are booked for %s. Check your email for the details.', wp_date( 'l j F, g:ia', $start->getTimestamp() ) ),
@@ -227,7 +222,7 @@ class KS_Intake {
 		// To the client.
 		$lines = [
 			$pending
-				? "We have reserved this time while we run a conflict check:"
+				? "We received your appointment request. It is not confirmed yet:"
 				: "Your consultation is confirmed:",
 			'',
 			"What:  $what",
@@ -237,20 +232,20 @@ class KS_Intake {
 		];
 
 		if ( $pending ) {
-			$lines[] = 'We will email again within one business day to confirm or to suggest another time.';
+			$lines[] = 'We will email you after the business reviews your request.';
 			$lines[] = '';
 		}
 
-		$lines[] = ks_config( 'compliance.email_notice', 'Sending this form does not create an attorney-client relationship. Do not send confidential or time-sensitive information until we have confirmed representation in writing.' );
+		$lines[] = ks_config( 'compliance.email_notice', 'Submitting a request does not guarantee an appointment.' );
 
 		wp_mail(
 			$contact['email'],
-			sprintf( '%s — %s', $pending ? 'Time reserved' : 'Consultation confirmed', get_bloginfo( 'name' ) ),
+			sprintf( '%s — %s', $pending ? 'Appointment requested' : 'Appointment confirmed', get_bloginfo( 'name' ) ),
 			implode( "\n", $lines )
 		);
 
 		// To the firm.
-		$internal = [ "New consultation request.", '', "Name:  {$contact['name']}", "Email: {$contact['email']}" ];
+		$internal = [ "New appointment request.", '', "Name:  {$contact['name']}", "Email: {$contact['email']}" ];
 
 		if ( ! empty( $contact['phone'] ) ) {
 			$internal[] = "Phone: {$contact['phone']}";
@@ -269,7 +264,7 @@ class KS_Intake {
 
 		if ( $pending ) {
 			$internal[] = '';
-			$internal[] = 'Awaiting conflict check: ' . admin_url( 'admin.php?page=ks-review-queue' );
+			$internal[] = 'Awaiting owner approval: ' . admin_url( 'admin.php?page=ks-review-queue' );
 		}
 
 		wp_mail(
