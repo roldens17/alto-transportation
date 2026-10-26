@@ -2,7 +2,7 @@
 // Executed by WP-CLI inside disposable WordPress CI.
 // Enable module before theme bootstrap using a must-use plugin filter.
 if ( ! class_exists( 'KS_Quotes' ) ) {
-	fwrite( STDERR, "Quote module missing\n" ); exit( 1 );
+	fwrite( STDERR, 'Quote module missing; template=' . get_template() . '; stylesheet=' . get_stylesheet() . '; parent_exists=' . ( file_exists( get_template_directory() . '/inc/quotes.php' ) ? 'yes' : 'no' ) . '; module=' . ( ks_module_enabled( 'quotes' ) ? 'enabled' : 'disabled' ) . "\n" ); exit( 1 );
 }
 KS_Quotes::register_type();
 if ( ! post_type_exists( 'ks_quote' ) ) {
