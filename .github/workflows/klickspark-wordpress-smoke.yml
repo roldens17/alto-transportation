@@ -40,6 +40,12 @@ jobs:
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli theme is-active fabulous-cleaning
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval 'if (!post_type_exists("ks_service")) { fwrite(STDERR, "Missing service post type\n"); exit(1); }'
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli post list --post_type=page --format=count | grep -Eq '^[1-9][0-9]*$'
+      - name: Test quote intake in real WordPress
+        run: |
+          docker compose --env-file .env -f docker-compose.klickspark.yml exec -T wordpress mkdir -p /var/www/html/wp-content/mu-plugins
+          docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-ci-enable.php wordpress:/var/www/html/wp-content/mu-plugins/quote-ci-enable.php
+          docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-intake-smoke.php wordpress:/var/www/html/wp-content/mu-plugins/quote-intake-smoke.php
+          docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval-file /var/www/html/wp-content/mu-plugins/quote-intake-smoke.php
       - name: Fetch actual homepage HTML
         run: |
           curl --fail --retry 10 --retry-delay 3 --retry-connrefused -sS http://127.0.0.1:8080/ -o /tmp/klickspark-home.html
