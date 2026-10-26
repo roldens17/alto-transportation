@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const cli = path.join(root, 'generator/src/cli.mjs');
+const output = path.join(root, 'generated/fabulous-cleaning');
+const run = (...args) => spawnSync(process.execPath, [cli, ...args], {cwd: root, encoding:'utf8'});
+test('validates Fabulous Cleaning', () => {
+  const r = run('validate', 'fabulous-cleaning');
+  assert.equal(r.status, 0, r.stderr);
+});
+test('rejects unsafe client paths', () => {
+  const r = run('build', '../outside', '--force');
+  assert.notEqual(r.status, 0);
+});
+test('builds deterministic child theme and preserves output by default', () => {
+  const first = run('build','fabulous-cleaning','--force');
+  assert.equal(first.status, 0, first.stderr);
+  const manifest = fs.readFileSync(path.join(output,'manifest.json'),'utf8');
+  const css = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/style.css'),'utf8');
+  assert.match(css,/Template: klickspark-base/);
+  const second = run('build','fabulous-cleaning');
+  assert.notEqual(second.status, 0);
+  const third = run('build','fabulous-cleaning','--force');
+  assert.equal(third.status, 0, third.stderr);
+  assert.equal(fs.readFileSync(path.join(output,'manifest.json'),'utf8'), manifest);
+  fs.rmSync(output,{recursive:true,force:true});
+});
