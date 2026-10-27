@@ -18,6 +18,23 @@ if [[ "$STATUS" != 201 ]]; then
   cat /tmp/ks-ci-response.json
   exit 1
 fi
+# The private admin-post download route must never serve a photo anonymously.
+QUOTE_ID="$("${COMPOSE[@]}" run --rm -T wpcli eval '
+$posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1]);
+foreach ($posts as $post) {
+  if ($post->post_title === "HTTP Upload Test — Cleaning") { echo $post->ID; exit; }
+}
+exit(1);
+' | tr -d '\r\n')"
+test -n "$QUOTE_ID"
+DOWNLOAD_STATUS="$(curl -sS -o /tmp/ks-ci-anon-download-response -w '%{http_code}' \
+  "$BASE_URL/wp-admin/admin-post.php?action=ks_quote_photo&quote_id=$QUOTE_ID&index=0")"
+if [[ "$DOWNLOAD_STATUS" == 200 ]]; then
+  echo "Anonymous private photo download unexpectedly succeeded"
+  exit 1
+fi
+echo "Anonymous HTTP private photo download denied: $DOWNLOAD_STATUS"
+
 "${COMPOSE[@]}" run --rm -T wpcli eval '
 $posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1]);
 $found = false;
