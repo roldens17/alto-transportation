@@ -165,6 +165,8 @@ final class KS_Quotes {
 		if ( ! wp_mkdir_p( $dir ) ) {
 			return new WP_Error( 'ks_photo_storage', 'Unable to create private storage.', [ 'status' => 503 ] );
 		}
+		// Restrict directory traversal by other local users where filesystem permissions allow.
+		@chmod( $dir, 0700 );
 		$saved = [];
 		foreach ( $photos as $photo ) {
 			$extension = [ 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp' ][ $photo['mime'] ];
