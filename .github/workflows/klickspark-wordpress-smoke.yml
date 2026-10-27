@@ -43,6 +43,8 @@ jobs:
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli post list --post_type=page --format=count | grep -Eq '^[1-9][0-9]*$'
       - name: Test quote intake in real WordPress
         run: |
+          docker compose --env-file .env -f docker-compose.klickspark.yml exec -T wordpress chown 33:33 /var/ks-private
+          docker compose --env-file .env -f docker-compose.klickspark.yml exec -T wordpress chmod 700 /var/ks-private
           docker compose --env-file .env -f docker-compose.klickspark.yml exec -T wordpress mkdir -p /var/www/html/wp-content/mu-plugins
           docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-ci-enable.php wordpress:/var/www/html/wp-content/mu-plugins/quote-ci-enable.php
           docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-intake-smoke.php wordpress:/var/www/html/wp-content/quote-intake-smoke.php
