@@ -37,8 +37,9 @@ echo "Anonymous HTTP private photo download denied: $DOWNLOAD_STATUS"
 
 # Authenticate a disposable administrator using WordPress's real auth cookie
 # and a nonce tied to that same session token, then compare downloaded bytes.
-AUTH_DETAILS="$(KS_QUOTE_ID="$QUOTE_ID" "${COMPOSE[@]}" run --rm -T wpcli eval '
-$user = get_user_by("login", "admin");
+AUTH_DETAILS="$("${COMPOSE[@]}" run --rm -T -e KS_QUOTE_ID="$QUOTE_ID" wpcli eval '
+$admins = get_users(["role" => "administrator", "number" => 1]);
+$user = $admins[0] ?? null;
 if (!$user) { fwrite(STDERR, "CI admin user missing\n"); exit(1); }
 $expires = time() + 3600;
 $token = WP_Session_Tokens::get_instance($user->ID)->create($expires);
