@@ -1,17 +1,19 @@
-# Disposable WordPress preview (Fabulous Cleaning only)
+# Disposable local WordPress preview (per client)
 
-This is a **local-only**, explicitly invoked WordPress browser preview for the existing Fabulous Cleaning showcase. It is not a public URL, hosted preview service, generic client preview, or deployment pipeline. Requires Docker Compose, Node 22, Python 3 + PyYAML, and a local `.env` populated from `.env.klickspark.example` with unique non-placeholder development credentials.
+This is an explicitly invoked **local-only** Docker WordPress preview, not a hosted preview or deployment. Requires Docker Compose, Node 22, Python 3/PyYAML and local non-placeholder `.env` credentials from `.env.klickspark.example`.
 
 ```bash
-bash scripts/klickspark-preview.sh start
-# Visit http://localhost:8091 (on the computer running Docker)
-bash scripts/klickspark-preview.sh stop
+bash scripts/klickspark-preview.sh start fabulous-cleaning
+# Browser on Docker host: http://localhost:8091
+bash scripts/klickspark-preview.sh stop fabulous-cleaning
 ```
 
-The script uses a separate Docker Compose project `klickspark-preview`, separate WordPress/database/private-storage volumes, and loopback-only ports 8091 (site) and 8092 (Mailpit). `stop` calls `down -v`, **permanently deleting the preview project's database and uploads**; never put customer data in this environment. Use only local test data. The script runs the existing Fabulous Cleaning seed file, activates the child theme, and does not activate quote/payment modules on its own. Booking and quote production readiness remain separate release gates.
+For a wizard-generated client, first import the YAML via `node generator/src/cli.mjs import new-cleaning --file /path/to/site.yaml`, then run `bash scripts/klickspark-preview.sh start new-cleaning`. The script validates the client config, builds its child theme and activates that theme. The first iteration supports client configurations for supported industries (currently cleaning). Only Fabulous Cleaning receives the existing example draft page/service seed; other clients get a fresh WordPress installation with their generated theme and no seeded pages. This does **not** automatically publish a finished website.
 
-**Important shared files:** the script rebuilds `generated/fabulous-cleaning` using `--force` and mounts the existing source-controlled parent theme and generated child theme. Those bind-mounted files are shared with local development; **do not run alongside another build or edit the generated files manually**. The WordPress data volumes are separate, but the generated filesystem is not. If port 8091 or 8092 is already in use, set `KS_PREVIEW_PORT` and `KS_PREVIEW_MAILPIT_PORT` to other free loopback ports.
+The preview explicitly refuses a client YAML file that enables quotes or payments. Booking remains subject to separate runtime review; this local preview does not authorize production activation. **Do not use real customer data.**
 
-This first step deliberately targets Fabulous Cleaning. The browser wizard's imported client configs are **not yet dynamically provisioned** by this script. No GitHub Actions run, merge, or production action launches the preview automatically. The owner must invoke it on a Docker-capable computer; it is not directly accessible from an iPhone without a separately approved secure tunnel.
+Each client uses a distinct Compose project `klickspark-preview-<client>` and distinct WordPress/database/private storage volumes. The site and Mailpit are loopback-only on ports 8091 and 8092 by default. To run multiple previews concurrently, set different `KS_PREVIEW_PORT` and `KS_PREVIEW_MAILPIT_PORT` values for each command. `stop` invokes `down -v`, **permanently deleting that preview client's isolated Docker data**.
 
-Acceptance checklist: homepage renders, mobile widths, page content, accessible controls, console errors, private data isolation, and no live payments. Never claim the site was visually tested solely because CI passed.
+**Filesystem caveat:** all previews still use the shared parent-theme source and build into `generated/<client>` with `--force`. Do not edit generated artifacts manually or run a build for the same client concurrently. The WordPress volumes are isolated, not the source files. The Docker Compose configuration still mounts the Fabulous Cleaning seed file for the WP-CLI container, but it is **executed only** for the Fabulous Cleaning client.
+
+Inspect responsive pages, accessible controls, browser console, WordPress logs, draft vs published status and privacy before approving a design. This script is not yet hands-on Docker/browser verified. Nothing here deploys, merges, or modifies a live site.
