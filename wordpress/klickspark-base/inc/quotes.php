@@ -275,7 +275,17 @@ final class KS_Quotes {
 				wp_delete_post( $id, true );
 				return $stored;
 			}
-			update_post_meta( $id, '_ks_quote_photos', $stored );
+			if ( ! update_post_meta( $id, '_ks_quote_photos', $stored ) ) {
+				// A database write failure must not strand private uploads on disk.
+				foreach ( $stored as $item ) {
+					@unlink( $item['path'] );
+				}
+				if ( $stored ) {
+					@rmdir( dirname( $stored[0]['path'] ) );
+				}
+				wp_delete_post( $id, true );
+				return new WP_Error( 'ks_save', 'Unable to save your request. Please try again.', [ 'status' => 503 ] );
+			}
 		}
 		update_post_meta( $id, '_ks_quote_contact', [ 'name' => $name, 'email' => $email, 'phone' => $phone ] );
 		update_post_meta( $id, '_ks_quote_service', $service );
