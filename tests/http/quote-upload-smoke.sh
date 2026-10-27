@@ -18,7 +18,12 @@ $generic = do_shortcode("[klickspark_quote_form]");
 if (strpos($generic, "<input name=\"service\" required") === false) {
     fwrite(STDERR, "Reusable quote service input missing\\n"); exit(1);
 }
-echo "Quote service choices and generic fallback rendered\\n";
+$escaped = do_shortcode("[klickspark_quote_form services='Safe Cleaning|<script>alert(1)</script>']");
+if (strpos($escaped, "<script>alert(1)</script>") !== false ||
+    strpos($escaped, "&lt;script&gt;alert(1)&lt;/script&gt;") === false) {
+    fwrite(STDERR, "Quote service option HTML escaping failed\\n"); exit(1);
+}
+echo "Quote service choices, generic fallback and HTML escaping rendered\\n";
 '
 
 # A valid tiny PNG. The CI host creates the multipart body; Apache/PHP processes it.
