@@ -26,7 +26,8 @@ test('builds deterministic child theme and preserves output by default', () => {
   assert.match(clientConfig,/"payment": "none"/);
   assert.match(clientConfig,/"booking": true/);
   const quoteTemplate = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/templates/page-quote-request.html'),'utf8');
-  assert.match(quoteTemplate,/\[klickspark_quote_form\]/);
+  assert.match(quoteTemplate,/\[klickspark_quote_form services=/);
+  assert.match(quoteTemplate,/Standard Cleaning\|Deep Cleaning\|Move-In \/ Move-Out/);
   assert.match(quoteTemplate,/does not book or charge you/);
   assert.match(css,/\.fc-quote-page/);
   const builtManifest = JSON.parse(manifest);
