@@ -230,9 +230,14 @@ final class KS_Quotes {
 		if ( ! $base || ! $path || ! is_file( $path ) || ! $quote_directory ) {
 			wp_die( 'Photo not found.', '', [ 'response' => 404 ] );
 		}
+		$extensions = [ 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp' ];
+		$mime = is_array( $photo ) ? (string) ( $photo['mime'] ?? '' ) : '';
+		if ( ! isset( $extensions[ $mime ] ) ) {
+			wp_die( 'Photo not found.', '', [ 'response' => 404 ] );
+		}
 		nocache_headers();
-		header( 'Content-Type: ' . $photo['mime'] );
-		header( 'Content-Disposition: attachment; filename="project-photo-' . $index . '.' . [ 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp' ][ $photo['mime'] ] . '"' );
+		header( 'Content-Type: ' . $mime );
+		header( 'Content-Disposition: attachment; filename="project-photo-' . $index . '.' . $extensions[ $mime ] . '"' );
 		header( 'X-Content-Type-Options: nosniff' );
 		readfile( $path );
 		exit;
