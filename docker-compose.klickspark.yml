@@ -30,7 +30,7 @@ services:
       - ks_wp:/var/www/html
       - ks_private:/var/ks-private
       - ./wordpress/klickspark-base:/var/www/html/wp-content/themes/klickspark-base:ro
-      - ./generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning:/var/www/html/wp-content/themes/fabulous-cleaning:ro
+      - ./generated/${KS_CLIENT:-fabulous-cleaning}/wp-content/themes/${KS_CLIENT:-fabulous-cleaning}:/var/www/html/wp-content/themes/${KS_CLIENT:-fabulous-cleaning}:ro
   wpcli:
     image: wordpress:cli-php8.3
     user: "33:33"
@@ -44,7 +44,7 @@ services:
     volumes:
       - ks_wp:/var/www/html
       - ./wordpress/klickspark-base:/var/www/html/wp-content/themes/klickspark-base:ro
-      - ./generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning:/var/www/html/wp-content/themes/fabulous-cleaning:ro
+      - ./generated/${KS_CLIENT:-fabulous-cleaning}/wp-content/themes/${KS_CLIENT:-fabulous-cleaning}:/var/www/html/wp-content/themes/${KS_CLIENT:-fabulous-cleaning}:ro
       - ks_private:/var/ks-private
       - ./wordpress/clients/fabulous-cleaning/seed.php:/opt/klickspark/seed.php:ro
     entrypoint: ["wp", "--path=/var/www/html"]
