@@ -34,3 +34,23 @@ foreach ($posts as $post) {
 if (!$found) { fwrite(STDERR, "HTTP upload quote not found\n"); exit(1); }
 echo "Real HTTP multipart upload and cleanup passed\n";
 '
+
+
+# Reject a disguised non-image over real HTTP before a quote is created.
+printf 'not an image' > /tmp/ks-ci-invalid.png
+BAD_STATUS="$(curl -sS -o /tmp/ks-ci-invalid-response.json -w '%{http_code}' \
+  -H "X-WP-Nonce: $NONCE" \
+  -F 'name=HTTP Invalid Image' -F 'email=invalid-image@example.test' \
+  -F 'service=Cleaning' -F 'description=Invalid image rejection regression' \
+  -F 'consent=1' -F 'photos[]=@/tmp/ks-ci-invalid.png;type=image/png' \
+  "$BASE_URL/?rest_route=/ks/v1/quote-request")"
+if [[ "$BAD_STATUS" != 400 ]]; then
+  echo "Invalid HTTP image expected 400, got: $BAD_STATUS"
+  cat /tmp/ks-ci-invalid-response.json
+  exit 1
+fi
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$invalid = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1, "s"=>"HTTP Invalid Image"]);
+if ($invalid) { fwrite(STDERR, "Invalid image created a quote record\n"); exit(1); }
+echo "Invalid HTTP image rejected without creating a quote\n";
+'
