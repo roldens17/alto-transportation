@@ -54,3 +54,26 @@ $invalid = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_
 if ($invalid) { fwrite(STDERR, "Invalid image created a quote record\n"); exit(1); }
 echo "Invalid HTTP image rejected without creating a quote\n";
 '
+
+
+# Reject too many photo attachments over HTTP.
+COUNT_STATUS="$(curl -sS -o /tmp/ks-ci-count-response.json -w '%{http_code}' \
+  -H "X-WP-Nonce: $NONCE" \
+  -F 'name=HTTP Excess Images' -F 'email=excess@example.test' \
+  -F 'service=Cleaning' -F 'description=Excess photo count regression' \
+  -F 'consent=1' \
+  -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  "$BASE_URL/?rest_route=/ks/v1/quote-request")"
+if [[ "$COUNT_STATUS" != 400 ]]; then
+  echo "Excess image count expected 400, got: $COUNT_STATUS"
+  cat /tmp/ks-ci-count-response.json
+  exit 1
+fi
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1, "s"=>"HTTP Excess Images"]);
+if ($posts) { fwrite(STDERR, "Excess photo count created a quote record\n"); exit(1); }
+echo "Excess photo count rejected without creating a quote\n";
+'
