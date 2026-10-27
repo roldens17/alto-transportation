@@ -12,7 +12,7 @@ STATUS="$(curl -sS -o /tmp/ks-ci-response.json -w '%{http_code}' \
   -F 'name=HTTP Upload Test' -F 'email=http-upload@example.test' \
   -F 'service=Cleaning' -F 'description=HTTP multipart upload regression' \
   -F 'consent=1' -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
-  "$BASE_URL/wp-json/ks/v1/quote-request")"
+  "$BASE_URL/?rest_route=/ks/v1/quote-request")"
 if [[ "$STATUS" != 201 ]]; then
   echo "HTTP photo upload failed: $STATUS"
   cat /tmp/ks-ci-response.json
