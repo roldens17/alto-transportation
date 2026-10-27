@@ -47,8 +47,9 @@ body{background:var(--fc-cream);-webkit-font-smoothing:antialiased}
 .fc-quote-page .ks-quote-form label:has(textarea),.fc-quote-page .ks-quote-form label:has(input[type=file]),.fc-quote-page .ks-quote-form label:has(input[type=checkbox]),.fc-quote-page .ks-quote-form button,.fc-quote-page .ks-quote-result{grid-column:1/-1}
 .fc-quote-page .ks-quote-form label:has(input[type=checkbox]){flex-direction:row;align-items:flex-start;font-weight:450}
 .fc-quote-page .ks-quote-form input:not([type=checkbox]):not([type=file]),.fc-quote-page .ks-quote-form textarea{width:100%;box-sizing:border-box;min-height:48px;padding:12px 14px;border:1px solid #cbdad1;border-radius:9px;background:#fcfdfb;font:inherit;color:var(--fc-pine)}
+.fc-quote-page .ks-quote-form select{width:100%;box-sizing:border-box;min-height:48px;padding:12px 14px;border:1px solid #cbdad1;border-radius:9px;background:#fcfdfb;font:inherit;color:var(--fc-pine);cursor:pointer}
 .fc-quote-page .ks-quote-form textarea{min-height:140px;resize:vertical}
-.fc-quote-page .ks-quote-form input:focus-visible,.fc-quote-page .ks-quote-form textarea:focus-visible{outline:3px solid #b18b58;outline-offset:2px}
+.fc-quote-page .ks-quote-form input:focus-visible,.fc-quote-page .ks-quote-form textarea:focus-visible,.fc-quote-page .ks-quote-form select:focus-visible{outline:3px solid #b18b58;outline-offset:2px}
 .fc-quote-page .ks-quote-form button{background:var(--fc-pine);border:0;border-radius:999px;color:#fff;padding:16px 28px;font:inherit;font-weight:750;cursor:pointer}
 .fc-quote-page .ks-quote-form button:hover{background:#20574e}
 .fc-quote-page .ks-quote-result{margin:0}
