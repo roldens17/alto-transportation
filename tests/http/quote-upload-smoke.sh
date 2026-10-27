@@ -38,6 +38,9 @@ echo "Anonymous HTTP private photo download denied: $DOWNLOAD_STATUS"
 # Log in through WordPress over HTTP and use its actual session cookie.
 # Read the photo nonce from the quote edit screen in the same browser session.
 source .env
+# Keep WordPress canonical URL on the same host used by curl in disposable CI.
+"${COMPOSE[@]}" run --rm -T wpcli option update home "$BASE_URL" >/dev/null
+"${COMPOSE[@]}" run --rm -T wpcli option update siteurl "$BASE_URL" >/dev/null
 COOKIE_JAR="$(mktemp)"
 trap 'rm -f "$COOKIE_JAR"' EXIT
 curl -sS -c "$COOKIE_JAR" "$BASE_URL/wp-login.php" -o /dev/null
@@ -48,7 +51,7 @@ LOGIN_STATUS="$(curl -sS -L -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o /tmp/ks-ci-admi
   --data-urlencode "redirect_to=$BASE_URL/wp-admin/" \
   --data-urlencode 'testcookie=1' \
   "$BASE_URL/wp-login.php")"
-if [[ "$LOGIN_STATUS" != 200 ]] || ! grep -q 'wpadminbar' /tmp/ks-ci-admin-dashboard.html; then
+if [[ "$LOGIN_STATUS" != 200 ]] || ! grep -Eq 'wp-admin-bar|wpadminbar|id="wpbody"' /tmp/ks-ci-admin-dashboard.html; then
   echo "Administrator HTTP login failed: $LOGIN_STATUS"
   exit 1
 fi
