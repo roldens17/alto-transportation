@@ -22,6 +22,12 @@ test('builds deterministic child theme and preserves output by default', () => {
   const manifest = fs.readFileSync(path.join(output,'manifest.json'),'utf8');
   const css = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/style.css'),'utf8');
   assert.match(css,/Template: klickspark-base/);
+  const quoteTemplate = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/templates/page-quote-request.html'),'utf8');
+  assert.match(quoteTemplate,/\[klickspark_quote_form\]/);
+  assert.match(quoteTemplate,/does not book or charge you/);
+  assert.match(css,/\.fc-quote-page/);
+  const builtManifest = JSON.parse(manifest);
+  assert.ok(builtManifest.files['wp-content/themes/fabulous-cleaning/templates/page-quote-request.html']);
   const second = run('build','fabulous-cleaning');
   assert.notEqual(second.status, 0);
   const third = run('build','fabulous-cleaning','--force');
