@@ -19,13 +19,13 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 - [x] Real HTTP rejection of disguised non-image content, more than three photos, and a photo exceeding 5 MiB; no quote record created. 
 - [x] Real HTTP anonymous download attempt denied. 
 - [x] All four workflows passed on 631b8d3. 
-- [x] Authenticated administrator photo download over real HTTP returned the original PNG bytes, with anonymous access denied (green runtime workflow on b83d672). JPEG/WebP remain unverified over real HTTP.
+- [x] Authenticated administrator photo download over real HTTP returned the original PNG bytes, with anonymous access denied (green runtime workflow on b83d672). JPEG/WebP real HTTP upload and cleanup were subsequently verified on `9f8ab55`.
 
 ## Must verify before production
 
-- [ ] Complete real HTTP multipart coverage for JPEG and WebP. Authorized PNG download bytes are verified; WP-CLI cannot simulate PHP's `is_uploaded_file()` success path.
+- [x] Real HTTP multipart JPEG and WebP upload, MIME metadata and permanent-delete cleanup passed in WordPress runtime CI on `9f8ab55`. PNG authorized download was verified separately.
 - [x] Exercise oversized, non-image, and excessive-count uploads over HTTP; each rejected before quote creation. 
-- [ ] Exercise partial and failed storage uploads over HTTP; ensure no orphaned private files or incomplete quote records.
+- [ ] Exercise a *mid-batch file-move failure* over real HTTP (after at least one successful private file write); verify no orphaned private files or incomplete quote records. PHP `UPLOAD_ERR_PARTIAL` rejection and photo-metadata-write failure are already covered.
 - [x] Inject a photo-metadata database-write failure over real HTTP and verify files and quote are removed (passed on 4fd548c).
 - [ ] Confirm private storage is an **absolute path outside the document root and WordPress installation**, with least-privilege filesystem ownership/permissions and no direct HTTP access. CI uses `/var/ks-private` in a dedicated Docker volume; each production host must be checked separately. Do not store secrets or customer data in the repository.
 - [ ] Decide and document quote/contact/photo retention period, deletion policy, backups, and how client data removal requests are handled. Permanent deletion triggers file cleanup; merely trashing a quote does not.
@@ -34,6 +34,10 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 - [ ] Run a final CI pass on the intended merge commit and obtain explicit owner approval before merge or deployment.
 
 ## Current automated evidence (2026-10-27)
+
+- [x] All four workflows passed on `9f8ab55`, including real HTTP JPEG and WebP upload/cleanup and the private-storage HTTP sentinel check.
+- [x] Quote module explicitly defaults to off in the generator and is disabled in the Fabulous Cleaning client configuration.
+- [ ] Production activation remains blocked on host, privacy, retention, proxy and owner approval checks.
 
 - [x] All four workflows passed on `90f0f1d`: general CI, generator, MariaDB integration, and WordPress runtime smoke.
 - [x] WordPress runtime renders the cleaning-specific service dropdown and generic reusable input.
