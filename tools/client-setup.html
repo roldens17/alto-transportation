@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KlickSpark — Client Setup</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:light;background:#f5f7f7;color:#172c2a}
+*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:24px 16px 70px}
+header{padding:24px 0}h1{font-size:clamp(1.8rem,5vw,2.8rem);margin:8px 0}p{line-height:1.55;color:#506460}
+.card{background:#fff;border:1px solid #dbe5e3;border-radius:20px;padding:24px;margin:18px 0}
+label{display:block;font-weight:650;margin:16px 0 6px}input[type=text],select,textarea{width:100%;padding:13px;border:1px solid #9aafab;border-radius:10px;font:inherit}
+input:focus,select:focus,textarea:focus{outline:3px solid #9bd6c9;outline-offset:2px}
+.check{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-weight:500}.check input{margin-top:5px}
+button{background:#176b66;color:white;border:0;padding:13px 18px;border-radius:10px;font:inherit;font-weight:650;cursor:pointer;margin:5px 8px 5px 0}
+button.secondary{background:#e2efec;color:#134c47}button:disabled{opacity:.5}
+small,.hint{color:#596f6b}textarea{font-family:ui-monospace,monospace;font-size:13px;min-height:330px}
+#error{color:#9b2424;font-weight:650}#result[hidden]{display:none}
+</style></head><body><main>
+<header><small>KLICKSPARK MEDIA · INTERNAL TOOL</small><h1>New client setup</h1><p>Prepare a safe WordPress client configuration in your browser. Nothing is sent to a server. This does not provision or deploy a site.</p></header>
+<form id="wizard" class="card">
+<h2>1. Business details</h2>
+<label for="name">Public business name</label><input id="name" type="text" maxlength="120" required placeholder="Example Cleaning LLC">
+<label for="slug">Client ID (lowercase letters, numbers, hyphens)</label><input id="slug" type="text" pattern="[a-z][a-z0-9]*(-[a-z0-9]+)*" maxlength="60" required placeholder="example-cleaning">
+<label for="industry">Industry</label><select id="industry"><option value="cleaning">Cleaning (supported)</option></select>
+<h2>2. Optional features</h2>
+<p>All business modules start off. Enable only after the required runtime, privacy, and deployment reviews.</p>
+<label class="check"><input id="booking" type="checkbox"> Include booking module configuration (requires testing before launch)</label>
+<label class="check"><input id="quotes" type="checkbox"> Include quote-request module configuration (requires private storage and privacy approval)</label>
+<p class="hint">Payments stay disabled. No WooCommerce or payment credentials are configured.</p>
+<button type="submit">Generate configuration</button>
+<p id="error" role="alert"></p>
+</form>
+<section id="result" class="card" hidden aria-live="polite"><h2>3. Review and save</h2>
+<p>Save as <code>clients/&lt;client-id&gt;/site.yaml</code> in the repository after review. Do not include customer secrets in Git.</p>
+<label for="output">Generated YAML</label><textarea id="output" readonly spellcheck="false"></textarea>
+<button id="download" type="button">Download site.yaml</button><button id="copy" type="button" class="secondary">Copy YAML</button>
+<p id="status" role="status"></p></section>
+</main><script>
+'use strict';
+const $ = id => document.getElementById(id);
+const safe = value => JSON.stringify(value);
+$('wizard').addEventListener('submit', event => {
+  event.preventDefault();
+  $('error').textContent = '';
+  const slug = $('slug').value.trim();
+  const name = $('name').value.trim();
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(slug) || !name || /[\u0000-\u001f]/.test(name)) {
+    $('error').textContent = 'Enter a valid business name and client ID.';
+    $('result').hidden = true;
+    return;
+  }
+  const yaml = [
+    'client:', '  id: ' + slug, '  name: ' + safe(name),
+    '  industry: cleaning', 'site:', '  timezone: America/New_York',
+    '  locale: en_US', 'modules:',
+    '  booking: ' + $('booking').checked, '  payments: false',
+    '  quotes: ' + $('quotes').checked,
+    'booking:', '  mode: slot', ''
+  ].join('\n');
+  $('output').value = yaml;
+  $('result').hidden = false;
+  $('status').textContent = 'Configuration prepared locally. Review before committing.';
+});
+$('download').addEventListener('click', () => {
+  const url = URL.createObjectURL(new Blob([$('output').value], {type:'text/yaml;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = 'site.yaml'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+$('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('output').value); $('status').textContent = 'YAML copied.'; }
+  catch { $('status').textContent = 'Copy unavailable; select and copy the YAML above.'; }
+});
+</script></body></html>
