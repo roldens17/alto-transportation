@@ -71,6 +71,8 @@ fi
 "${compose[@]}" run --rm -T wpcli theme activate "$client"
 if [[ "$client" == "fabulous-cleaning" ]]; then
   "${compose[@]}" run --rm -T wpcli eval-file /opt/klickspark/seed.php
+else
+  "${compose[@]}" run --rm -T wpcli eval-file /opt/klickspark/preview-seed.php
 fi
 echo "Preview: http://localhost:$KS_PORT"
 echo "Local-only; not deployed. Stop and delete isolated preview data with: bash scripts/klickspark-preview.sh stop $client"
