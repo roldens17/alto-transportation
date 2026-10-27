@@ -11,3 +11,7 @@ This is an internal prototype; browser download and clipboard behavior depend on
 ## End-to-end verification
 
 The generator regression test now covers the full wizard-shaped YAML import → validation → child-theme build path. It verifies the generated manifest, booking and quotes disabled, no payment mode, and protection against overwriting build output. Run `node --test generator/test/*.test.mjs` with the dependencies listed in `docs/GENERATOR.md`. The generated WordPress child theme is a build artifact, **not a rendered site preview**; WordPress provisioning and browser acceptance are separate gates.
+
+## Browser concept preview
+
+After generating YAML, the wizard also displays a responsive, text-only **illustrative cleaning-business concept** using the public business name. It is built with safe DOM text assignment (not injected HTML). This preview is **not** the generated WordPress theme, does not load WordPress blocks, and must not be treated as client approval of a rendered website. Real preview and accessibility checks still require a disposable WordPress installation.
