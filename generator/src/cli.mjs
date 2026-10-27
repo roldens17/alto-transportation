@@ -42,6 +42,7 @@ function load(slug) {
   if (!config.client?.name || typeof config.client.name !== 'string') throw new Error('client.name is required.');
   if (typeof config.modules?.booking !== 'boolean') throw new Error('modules.booking must be boolean.');
   if (typeof config.modules?.payments !== 'boolean') throw new Error('modules.payments must be boolean.');
+  if (config.modules?.quotes !== undefined && typeof config.modules.quotes !== 'boolean') throw new Error('modules.quotes must be boolean.');
   if (config.modules.payments && !config.modules.booking) throw new Error('Payments require booking in v1.');
   if (config.modules.booking && !['slot', 'route'].includes(config.booking?.mode)) throw new Error('Unsupported booking mode.');
   if (config.modules.payments && config.payments?.provider !== 'woocommerce') throw new Error('Only WooCommerce payments are supported.');
@@ -87,7 +88,7 @@ Version: 0.1.0
   const phpConfig = {
     modules: {
       booking: cfg.modules.booking, fleet: !!cfg.modules.fleet, places: !!cfg.modules.places,
-      activities: !!cfg.modules.activities
+      activities: !!cfg.modules.activities, quotes: cfg.modules.quotes === true
     },
     booking: {
       mode: bookingConfig.mode ?? 'slot',
@@ -150,7 +151,7 @@ ${footer}
   };
   // Client-specific presentation overlays; shared framework and booking behavior remain unchanged.
   const visualDir = path.join(root, 'clients', slug, 'theme');
-  for (const relative of ['style.css', 'templates/front-page.html']) {
+  for (const relative of ['style.css', 'templates/front-page.html', 'templates/page-quote-request.html']) {
     const source = path.join(visualDir, relative);
     if (fs.existsSync(source)) {
       if (relative === 'style.css') files[relative] += '\n' + fs.readFileSync(source, 'utf8') + '\n';

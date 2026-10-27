@@ -34,3 +34,4 @@ if ( 'slot' === ks_config( 'booking.mode' ) ) {
 
 require_once KS_BASE_DIR . '/inc/compliance.php';
 require_once KS_BASE_DIR . '/inc/blocks.php';
+require_once KS_BASE_DIR . '/inc/quotes.php';

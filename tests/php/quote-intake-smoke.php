@@ -1,0 +1,224 @@
+<?php
+// Executed by WP-CLI inside disposable WordPress CI.
+// Enable module before theme bootstrap using a must-use plugin filter.
+if ( ! class_exists( 'KS_Quotes' ) ) {
+	fwrite( STDERR, 'Quote module missing; template=' . get_template() . '; stylesheet=' . get_stylesheet() . '; parent_exists=' . ( file_exists( get_template_directory() . '/inc/quotes.php' ) ? 'yes' : 'no' ) . '; module=' . ( ks_module_enabled( 'quotes' ) ? 'enabled' : 'disabled' ) . "\n" ); exit( 1 );
+}
+KS_Quotes::register_type();
+if ( ! post_type_exists( 'ks_quote' ) ) {
+	fwrite( STDERR, "Quote CPT missing\n" ); exit( 1 );
+}
+$req = new WP_REST_Request( 'POST', '/ks/v1/quote-request' );
+$req->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+$req->set_body_params( [
+	'name' => 'Test Customer',
+	'email' => 'customer@example.test',
+	'service' => 'Cleaning',
+	'description' => 'Clean the office.',
+	'consent' => '1',
+] );
+$invalid = clone $req;
+$invalid->set_body_params( [ 'name' => '', 'email' => 'not-an-email', 'service' => '', 'description' => '' ] );
+if ( ! is_wp_error( KS_Quotes::submit( $invalid ) ) ) {
+	fwrite( STDERR, "Invalid input accepted\n" ); exit( 1 );
+}
+$response = KS_Quotes::submit( $req );
+if ( is_wp_error( $response ) || 201 !== $response->get_status() ) {
+	fwrite( STDERR, "Valid quote rejected: " . ( is_wp_error( $response ) ? $response->get_error_message() : $response->get_status() ) . "\n" ); exit( 1 );
+}
+$quotes = get_posts( [ 'post_type' => 'ks_quote', 'post_status' => 'private', 'numberposts' => 1 ] );
+if ( 1 !== count( $quotes ) || 'new' !== get_post_meta( $quotes[0]->ID, '_ks_quote_status', true ) ) {
+	fwrite( STDERR, "Private quote not saved\n" ); exit( 1 );
+}
+$files = [ 'photos' => [ 'name' => [ 'bad.exe' ], 'error' => [ UPLOAD_ERR_OK ], 'size' => [ 4 ], 'tmp_name' => [ '/tmp/missing' ] ] ];
+$bad = clone $req;
+$bad->set_file_params( $files );
+if ( ! is_wp_error( KS_Quotes::submit( $bad ) ) ) {
+	fwrite( STDERR, "Invalid upload accepted\n" ); exit( 1 );
+}
+// Reject submissions without a valid REST nonce, before any record is created.
+$missing_nonce = clone $req;
+$missing_nonce->set_header( 'X-WP-Nonce', 'invalid-nonce' );
+$nonce_result = KS_Quotes::submit( $missing_nonce );
+if ( ! is_wp_error( $nonce_result ) || 'ks_nonce' !== $nonce_result->get_error_code() ) {
+	fwrite( STDERR, "Invalid REST nonce accepted\\n" ); exit( 1 );
+}
+// A valid upload shape with a PHP upload error must not create a quote.
+$upload_failure = clone $req;
+$upload_failure->set_file_params( [ 'photos' => [
+	'name' => [ 'photo.jpg' ], 'error' => [ UPLOAD_ERR_PARTIAL ],
+	'size' => [ 100 ], 'tmp_name' => [ '/tmp/missing' ],
+] ] );
+$upload_result = KS_Quotes::submit( $upload_failure );
+if ( ! is_wp_error( $upload_result ) || 'ks_photo_limit' !== $upload_result->get_error_code() ) {
+	fwrite( STDERR, "Partial upload accepted\\n" ); exit( 1 );
+}
+// Verify permanent deletion removes only this quote's private files.
+$private_root = ks_config( 'quotes.private_upload_dir' );
+if ( ! wp_mkdir_p( $private_root ) ) {
+	fwrite( STDERR, "Cannot create isolated private test directory\\n" ); exit( 1 );
+}
+$quote_id = $quotes[0]->ID;
+$quote_dir = $private_root . '/quote-' . $quote_id . '-testtoken';
+if ( ! wp_mkdir_p( $quote_dir ) ) {
+	fwrite( STDERR, "Cannot create quote test directory\\n" ); exit( 1 );
+}
+$photo_path = $quote_dir . '/photo.jpg';
+$other_path = $private_root . '/unrelated.jpg';
+file_put_contents( $photo_path, 'private-test-photo' );
+file_put_contents( $other_path, 'unrelated-file-must-survive' );
+update_post_meta( $quote_id, '_ks_quote_photos', [
+	[ 'path' => $photo_path, 'mime' => 'image/jpeg' ],
+	[ 'path' => $other_path, 'mime' => 'image/jpeg' ],
+] );
+// The private-photo endpoint must deny an unauthenticated request.
+$original_user = get_current_user_id();
+$original_get = $_GET;
+wp_set_current_user( 0 );
+$_GET = [ 'quote_id' => $quote_id, 'index' => 0 ];
+$deny_handler = static function () {
+	return static function ( $message, $title = '', $args = [] ) {
+		throw new RuntimeException( 'ks_photo_denied:' . (int) ( $args['response'] ?? 0 ) );
+	};
+};
+add_filter( 'wp_die_handler', $deny_handler );
+$denied = false;
+try {
+	KS_Quotes::download_photo();
+} catch ( RuntimeException $error ) {
+	$denied = 'ks_photo_denied:403' === $error->getMessage();
+} finally {
+	remove_filter( 'wp_die_handler', $deny_handler );
+	$_GET = $original_get;
+	wp_set_current_user( $original_user );
+}
+if ( ! $denied ) {
+	fwrite( STDERR, "Unauthenticated photo download was not denied with 403\\n" ); exit( 1 );
+}
+// Even an administrator cannot use quote metadata to read a file outside private storage.
+$outside_path = tempnam( sys_get_temp_dir(), 'ks-outside-' );
+file_put_contents( $outside_path, 'unrelated-private-file' );
+update_post_meta( $quote_id, '_ks_quote_photos', [
+	[ 'path' => $outside_path, 'mime' => 'image/jpeg' ],
+	[ 'path' => $photo_path, 'mime' => 'image/jpeg' ],
+] );
+$admin_id = wp_insert_user( [
+	'user_login' => 'ks_quote_ci_admin_' . wp_generate_password( 8, false, false ),
+	'user_pass' => wp_generate_password( 24 ),
+	'user_email' => 'ks-quote-ci-admin-' . wp_generate_password( 8, false, false ) . '@example.test',
+	'role' => 'administrator',
+] );
+if ( is_wp_error( $admin_id ) ) {
+	fwrite( STDERR, "Cannot create test administrator\\n" ); exit( 1 );
+}
+$original_user = get_current_user_id();
+$original_get = $_GET;
+$original_request = $_REQUEST;
+wp_set_current_user( $admin_id );
+$_GET = [ 'quote_id' => $quote_id, 'index' => 0, '_wpnonce' => wp_create_nonce( 'ks_quote_photo_' . $quote_id ) ];
+$_REQUEST = array_merge( $_REQUEST, $_GET );
+$deny_handler = static function () {
+	return static function ( $message, $title = '', $args = [] ) {
+		throw new RuntimeException( 'ks_photo_denied:' . (int) ( $args['response'] ?? 0 ) );
+	};
+};
+add_filter( 'wp_die_handler', $deny_handler );
+$denied = false;
+try {
+	KS_Quotes::download_photo();
+} catch ( RuntimeException $error ) {
+	$denied = 'ks_photo_denied:404' === $error->getMessage();
+} finally {
+	remove_filter( 'wp_die_handler', $deny_handler );
+	$_GET = $original_get;
+	$_REQUEST = $original_request;
+	wp_set_current_user( $original_user );
+}
+if ( ! $denied ) {
+	fwrite( STDERR, "Photo outside private storage denial mismatch (check handler response)\\n" ); exit( 1 );
+}
+// A photo in another quote's private directory must also be denied.
+$sibling_dir = $private_root . '/quote-' . ( $quote_id + 1000 ) . '-testtoken';
+wp_mkdir_p( $sibling_dir );
+$sibling_path = $sibling_dir . '/other.jpg';
+file_put_contents( $sibling_path, 'another-quote-photo' );
+update_post_meta( $quote_id, '_ks_quote_photos', [ [ 'path' => $sibling_path, 'mime' => 'image/jpeg' ], [ 'path' => $photo_path, 'mime' => 'image/jpeg' ] ] );
+wp_set_current_user( $admin_id );
+$original_get = $_GET;
+$original_request = $_REQUEST;
+$_GET = [ 'quote_id' => $quote_id, 'index' => 0, '_wpnonce' => wp_create_nonce( 'ks_quote_photo_' . $quote_id ) ];
+$_REQUEST = array_merge( $_REQUEST, $_GET );
+add_filter( 'wp_die_handler', $deny_handler );
+$sibling_denied = false;
+try {
+	KS_Quotes::download_photo();
+} catch ( RuntimeException $error ) {
+	$sibling_denied = 'ks_photo_denied:404' === $error->getMessage();
+} finally {
+	remove_filter( 'wp_die_handler', $deny_handler );
+	$_GET = $original_get;
+	$_REQUEST = $original_request;
+	wp_set_current_user( $original_user );
+}
+if ( ! $sibling_denied ) {
+	fwrite( STDERR, "Cross-quote private photo access was not denied\\n" ); exit( 1 );
+}
+unlink( $sibling_path );
+rmdir( $sibling_dir );
+update_post_meta( $quote_id, '_ks_quote_photos', [ [ 'path' => $photo_path, 'mime' => 'image/jpeg' ] ] );
+// Reject tampered photo MIME metadata before any download headers are sent.
+update_post_meta( $quote_id, '_ks_quote_photos', [ [ 'path' => $photo_path, 'mime' => 'text/html' ] ] );
+wp_set_current_user( $admin_id );
+$original_get = $_GET;
+$original_request = $_REQUEST;
+$_GET = [ 'quote_id' => $quote_id, 'index' => 0, '_wpnonce' => wp_create_nonce( 'ks_quote_photo_' . $quote_id ) ];
+$_REQUEST = array_merge( $_REQUEST, $_GET );
+add_filter( 'wp_die_handler', $deny_handler );
+$mime_denied = false;
+try {
+	KS_Quotes::download_photo();
+} catch ( RuntimeException $error ) {
+	$mime_denied = 'ks_photo_denied:404' === $error->getMessage();
+} finally {
+	remove_filter( 'wp_die_handler', $deny_handler );
+	$_GET = $original_get;
+	$_REQUEST = $original_request;
+	wp_set_current_user( $original_user );
+}
+if ( ! $mime_denied ) {
+	fwrite( STDERR, "Tampered photo MIME was not denied\\n" ); exit( 1 );
+}
+update_post_meta( $quote_id, '_ks_quote_photos', [ [ 'path' => $photo_path, 'mime' => 'image/jpeg' ] ] );
+// Malformed stored metadata must return 404, not trigger a PHP warning or file response.
+update_post_meta( $quote_id, '_ks_quote_photos', [ 'not-a-photo-record' ] );
+wp_set_current_user( $admin_id );
+$original_get = $_GET;
+$original_request = $_REQUEST;
+$_GET = [ 'quote_id' => $quote_id, 'index' => 0, '_wpnonce' => wp_create_nonce( 'ks_quote_photo_' . $quote_id ) ];
+$_REQUEST = array_merge( $_REQUEST, $_GET );
+add_filter( 'wp_die_handler', $deny_handler );
+$malformed_denied = false;
+try {
+	KS_Quotes::download_photo();
+} catch ( RuntimeException $error ) {
+	$malformed_denied = 'ks_photo_denied:404' === $error->getMessage();
+} finally {
+	remove_filter( 'wp_die_handler', $deny_handler );
+	$_GET = $original_get;
+	$_REQUEST = $original_request;
+	wp_set_current_user( $original_user );
+}
+if ( ! $malformed_denied ) {
+	fwrite( STDERR, "Malformed photo metadata was not denied\\n" ); exit( 1 );
+}
+update_post_meta( $quote_id, '_ks_quote_photos', [ [ 'path' => $photo_path, 'mime' => 'image/jpeg' ] ] );
+require_once ABSPATH . 'wp-admin/includes/user.php';
+wp_delete_user( $admin_id );
+wp_delete_post( $quote_id, true );
+if ( file_exists( $photo_path ) || is_dir( $quote_dir ) || ! is_file( $other_path ) || ! is_file( $outside_path ) ) {
+	fwrite( STDERR, "Private quote photo cleanup failed or deleted unrelated file\\n" ); exit( 1 );
+}
+unlink( $outside_path );
+unlink( $other_path );
+rmdir( $private_root );
+echo "Quote intake, private record and photo cleanup smoke passed\\n";
