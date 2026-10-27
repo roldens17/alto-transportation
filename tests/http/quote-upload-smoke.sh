@@ -35,36 +35,36 @@ if [[ "$DOWNLOAD_STATUS" == 200 ]]; then
 fi
 echo "Anonymous HTTP private photo download denied: $DOWNLOAD_STATUS"
 
-# Authenticate a disposable administrator using WordPress's real auth cookie
-# and a nonce tied to that same session token, then compare downloaded bytes.
-AUTH_DETAILS="$("${COMPOSE[@]}" run --rm -T -e KS_QUOTE_ID="$QUOTE_ID" wpcli eval '
-$admins = get_users(["role" => "administrator", "number" => 1]);
-$user = $admins[0] ?? null;
-if (!$user) { fwrite(STDERR, "CI admin user missing\n"); exit(1); }
-$expires = time() + 3600;
-$token = WP_Session_Tokens::get_instance($user->ID)->create($expires);
-$cookie = wp_generate_auth_cookie($user->ID, $expires, "auth", $token);
-$logged_in = wp_generate_auth_cookie($user->ID, $expires, "logged_in", $token);
-$_COOKIE[LOGGED_IN_COOKIE] = $logged_in;
-wp_set_current_user($user->ID);
-$nonce = wp_create_nonce("ks_quote_photo_" . (int) getenv("KS_QUOTE_ID"));
-echo "\nKS_AUTH_RESULT:" . AUTH_COOKIE . "=" . $cookie . "; " . LOGGED_IN_COOKIE . "=" . $logged_in . "|" . $nonce . "\n";
-' | sed -n 's/.*KS_AUTH_RESULT://p' | tail -n 1 | tr -d '\r\n')"
-AUTH_COOKIES="${AUTH_DETAILS%%|*}"
-PHOTO_NONCE="${AUTH_DETAILS#*|}"
-if [[ "$AUTH_DETAILS" != *"|"* || -z "$AUTH_COOKIES" || ! "$PHOTO_NONCE" =~ ^[a-zA-Z0-9]+$ ]]; then
-  echo "Could not create administrator download session"
+# Log in through WordPress over HTTP and use its actual session cookie.
+# Read the photo nonce from the quote edit screen in the same browser session.
+source .env
+COOKIE_JAR="$(mktemp)"
+trap 'rm -f "$COOKIE_JAR"' EXIT
+curl -sS -c "$COOKIE_JAR" "$BASE_URL/wp-login.php" -o /dev/null
+LOGIN_STATUS="$(curl -sS -L -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o /tmp/ks-ci-admin-dashboard.html -w '%{http_code}' \
+  --data-urlencode "log=$WP_ADMIN_USER" \
+  --data-urlencode "pwd=$WP_ADMIN_PASSWORD" \
+  --data-urlencode 'wp-submit=Log In' \
+  --data-urlencode "redirect_to=$BASE_URL/wp-admin/" \
+  --data-urlencode 'testcookie=1' \
+  "$BASE_URL/wp-login.php")"
+if [[ "$LOGIN_STATUS" != 200 ]] || ! grep -q 'wpadminbar' /tmp/ks-ci-admin-dashboard.html; then
+  echo "Administrator HTTP login failed: $LOGIN_STATUS"
   exit 1
 fi
-ADMIN_DOWNLOAD_STATUS="$(curl -sS -o /tmp/ks-ci-admin-downloaded.png -w '%{http_code}' \
-  -H "Cookie: $AUTH_COOKIES" \
+curl -fsS -b "$COOKIE_JAR" "$BASE_URL/wp-admin/post.php?post=$QUOTE_ID&action=edit" -o /tmp/ks-ci-quote-admin.html
+PHOTO_NONCE="$(grep -oE 'ks_quote_photo_[^" ]+|_wpnonce=[a-zA-Z0-9]+' /tmp/ks-ci-quote-admin.html | grep '^_wpnonce=' | head -n 1 | cut -d= -f2 || true)"
+if [[ -z "$PHOTO_NONCE" ]]; then
+  echo "Quote edit screen did not expose photo download nonce"
+  exit 1
+fi
+ADMIN_DOWNLOAD_STATUS="$(curl -sS -b "$COOKIE_JAR" -o /tmp/ks-ci-admin-downloaded.png -w '%{http_code}' \
   "$BASE_URL/wp-admin/admin-post.php?action=ks_quote_photo&quote_id=$QUOTE_ID&index=0&_wpnonce=$PHOTO_NONCE")"
 if [[ "$ADMIN_DOWNLOAD_STATUS" != 200 ]] || ! cmp -s /tmp/ks-ci-photo.png /tmp/ks-ci-admin-downloaded.png; then
-  echo "Authorized administrator photo download failed: HTTP $ADMIN_DOWNLOAD_STATUS or byte mismatch"
+  echo "Administrator photo download failed: HTTP $ADMIN_DOWNLOAD_STATUS or byte mismatch"
   exit 1
 fi
 echo "Authorized administrator downloaded exact private PNG bytes"
-
 
 "${COMPOSE[@]}" run --rm -T wpcli eval '
 $posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1]);
