@@ -253,3 +253,31 @@ if [[ "$BEFORE_DIRS" != "$AFTER_DIRS" ]]; then
   exit 1
 fi
 echo "Metadata write failure cleaned up quote and private photos"
+
+# Force second photo move to fail after first move succeeded; no orphaned
+# private directory or incomplete quote may remain.
+BEFORE_BATCH_DIRS="$("${COMPOSE[@]}" run --rm -T wpcli eval 'echo count(glob("/var/ks-private/quote-*", GLOB_ONLYDIR) ?: []);' | tr -d '\r\n')"
+BATCH_STATUS="$(curl -sS -o /tmp/ks-ci-batch-failure.json -w '%{http_code}' \
+  -H "X-WP-Nonce: $NONCE" \
+  -F 'name=HTTP Mid-Batch Failure' -F 'email=batch-failure@example.test' \
+  -F 'service=Cleaning' -F 'description=Second move failure regression' \
+  -F 'consent=1' \
+  -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  "$BASE_URL/?rest_route=/ks/v1/quote-request")"
+if [[ "$BATCH_STATUS" != 503 ]]; then
+  echo "Mid-batch failure expected 503, got $BATCH_STATUS"
+  cat /tmp/ks-ci-batch-failure.json
+  exit 1
+fi
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$posts = get_posts(["post_type"=>"ks_quote","post_status"=>"private","posts_per_page"=>-1,"s"=>"HTTP Mid-Batch Failure"]);
+if ($posts) { fwrite(STDERR, "Mid-batch failure left a quote record\\n"); exit(1); }
+'
+AFTER_BATCH_DIRS="$("${COMPOSE[@]}" run --rm -T wpcli eval 'echo count(glob("/var/ks-private/quote-*", GLOB_ONLYDIR) ?: []);' | tr -d '\r\n')"
+if [[ "$BEFORE_BATCH_DIRS" != "$AFTER_BATCH_DIRS" ]]; then
+  echo "Mid-batch failure left an orphaned private directory"
+  exit 1
+fi
+echo "Mid-batch upload failure cleaned up the first saved photo and quote"
+
