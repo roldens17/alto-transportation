@@ -115,3 +115,35 @@ $posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_pe
 if ($posts) { fwrite(STDERR, "Oversized image created a quote record\n"); exit(1); }
 echo "Oversized image rejected without creating a quote\n";
 '
+
+
+# Force the photo metadata database write to fail after a real multipart upload.
+# The quote and its newly created private photo directory must both be removed.
+BEFORE_DIRS="$("${COMPOSE[@]}" run --rm -T wpcli eval '
+$dirs = glob("/var/ks-private/quote-*", GLOB_ONLYDIR);
+echo count($dirs ?: []);
+' | tr -d '\r\n')"
+FAIL_STATUS="$(curl -sS -o /tmp/ks-ci-meta-failure-response.json -w '%{http_code}' \
+  -H "X-WP-Nonce: $NONCE" \
+  -F 'name=HTTP Metadata Failure' -F 'email=metadata-failure@example.test' \
+  -F 'service=Cleaning' -F 'description=Metadata write failure regression' \
+  -F 'consent=1' -F 'photos[]=@/tmp/ks-ci-photo.png;type=image/png' \
+  "$BASE_URL/?rest_route=/ks/v1/quote-request")"
+if [[ "$FAIL_STATUS" != 503 ]]; then
+  echo "Metadata failure expected 503, got: $FAIL_STATUS"
+  cat /tmp/ks-ci-meta-failure-response.json
+  exit 1
+fi
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1, "s"=>"HTTP Metadata Failure"]);
+if ($posts) { fwrite(STDERR, "Metadata failure left a quote record\n"); exit(1); }
+'
+AFTER_DIRS="$("${COMPOSE[@]}" run --rm -T wpcli eval '
+$dirs = glob("/var/ks-private/quote-*", GLOB_ONLYDIR);
+echo count($dirs ?: []);
+' | tr -d '\r\n')"
+if [[ "$BEFORE_DIRS" != "$AFTER_DIRS" ]]; then
+  echo "Metadata failure left an orphaned private photo directory: before=$BEFORE_DIRS after=$AFTER_DIRS"
+  exit 1
+fi
+echo "Metadata write failure cleaned up quote and private photos"
