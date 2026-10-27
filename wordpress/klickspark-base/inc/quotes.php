@@ -182,7 +182,7 @@ final class KS_Quotes {
 			$extension = [ 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp' ][ $photo['mime'] ];
 			$filename = wp_generate_uuid4() . '.' . $extension;
 			$path = $dir . '/' . $filename;
-			if ( ! move_uploaded_file( $photo['tmp'], $path ) ) {
+			if ( ! apply_filters( 'ks_quote_allow_photo_move', true, $id, count( $saved ) ) || ! move_uploaded_file( $photo['tmp'], $path ) ) {
 				foreach ( $saved as $item ) { @unlink( $item['path'] ); }
 				@rmdir( $dir );
 				return new WP_Error( 'ks_photo_storage', 'Unable to store project photos.', [ 'status' => 503 ] );
