@@ -13,6 +13,13 @@ button{background:#176b66;color:white;border:0;padding:13px 18px;border-radius:1
 button.secondary{background:#e2efec;color:#134c47}button:disabled{opacity:.5}
 small,.hint{color:#596f6b}textarea{font-family:ui-monospace,monospace;font-size:13px;min-height:330px}
 #error{color:#9b2424;font-weight:650}#result[hidden]{display:none}
+.site-mock{border:1px solid #d9e6e3;border-radius:14px;overflow:hidden;background:#fff}
+.mock-nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px;font-size:13px}
+.mock-nav span{color:#5d7470}.mock-hero{padding:38px 22px;background:#e4f3ee}
+.mock-hero h2{font-size:clamp(1.5rem,5vw,2.5rem);max-width:480px}
+.mock-cta{display:inline-block;padding:12px 20px;border-radius:8px;background:#176b66;color:#fff;font-weight:650}
+.mock-services{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:18px}
+.mock-services div{background:#f3f7f5;border-radius:10px;padding:18px 12px;font-weight:600;font-size:13px}
 </style></head><body><main>
 <header><small>KLICKSPARK MEDIA · INTERNAL TOOL</small><h1>New client setup</h1><p>Prepare a safe WordPress client configuration in your browser. Nothing is sent to a server. This does not provision or deploy a site.</p></header>
 <form id="wizard" class="card">
@@ -33,6 +40,13 @@ small,.hint{color:#596f6b}textarea{font-family:ui-monospace,monospace;font-size:
 <label for="output">Generated YAML</label><textarea id="output" readonly spellcheck="false"></textarea>
 <button id="download" type="button">Download site.yaml</button><button id="copy" type="button" class="secondary">Copy YAML</button>
 <p id="status" role="status"></p></section>
+<section id="design-preview" class="card" hidden aria-label="Illustrative website preview">
+<h2>4. Concept preview</h2><p>This is an illustrative browser mockup, not a rendered WordPress site. Content and calls to action are placeholders.</p>
+<div class="site-mock">
+  <div class="mock-nav"><strong id="mock-brand"></strong><span>Home · Services · Contact</span></div>
+  <div class="mock-hero"><small>LOCAL CLEANING SERVICES</small><h2 id="mock-heading"></h2><p>Dependable cleaning for homes and businesses. Replace this sample copy before launch.</p><span class="mock-cta">Contact us</span></div>
+  <div class="mock-services"><div>Residential Cleaning</div><div>Deep Cleaning</div><div>Move-In / Move-Out</div></div>
+</div></section>
 </main><script>
 'use strict';
 const $ = id => document.getElementById(id);
@@ -56,6 +70,9 @@ $('wizard').addEventListener('submit', event => {
     'booking:', '  mode: slot', ''
   ].join('\n');
   $('output').value = yaml;
+  $('mock-brand').textContent = name;
+  $('mock-heading').textContent = 'A fresher space starts with ' + name;
+  $('design-preview').hidden = false;
   $('result').hidden = false;
   $('status').textContent = 'Configuration prepared locally. Review before committing.';
 });
