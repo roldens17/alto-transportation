@@ -7,3 +7,7 @@ Open `tools/client-setup.html` in a browser. It runs entirely client-side: no ba
 Quote activation requires the separate host-specific release checklist `docs/QUOTE-RELEASE-GATE.md`. Booking activation requires its own runtime acceptance review. The wizard is not a substitute for the PR #14 onboarding and client launch checklist.
 
 This is an internal prototype; browser download and clipboard behavior depend on the host/browser. Do not claim that it is publicly hosted or production ready.
+
+## End-to-end verification
+
+The generator regression test now covers the full wizard-shaped YAML import → validation → child-theme build path. It verifies the generated manifest, booking and quotes disabled, no payment mode, and protection against overwriting build output. Run `node --test generator/test/*.test.mjs` with the dependencies listed in `docs/GENERATOR.md`. The generated WordPress child theme is a build artifact, **not a rendered site preview**; WordPress provisioning and browser acceptance are separate gates.
