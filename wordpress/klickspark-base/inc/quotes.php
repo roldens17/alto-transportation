@@ -43,7 +43,7 @@ final class KS_Quotes {
 			. '<label>Name <input name="name" required maxlength="120"></label>'
 			. '<label>Email <input type="email" name="email" required maxlength="190"></label>'
 			. '<label>Phone <input name="phone" maxlength="40"></label>'
-			. '<label>Service <select name="service" required><option value="">Choose a service</option><option value="Standard Cleaning">Standard Cleaning</option><option value="Deep Cleaning">Deep Cleaning</option><option value="Move-In / Move-Out">Move-In / Move-Out</option><option value="Other Cleaning">Other Cleaning</option></select></label>'
+			. '<label>Service <input name="service" required maxlength="120" list="ks-quote-services"></label>'
 			. '<label>Describe the job <textarea name="description" required maxlength="5000"></textarea></label>'
 			. '<label>Project photos (up to 3 JPEG, PNG or WebP images, 5 MB each) <input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple></label>'
 			. '<label><input type="checkbox" name="consent" value="1" required> I agree to be contacted about this request.</label>'
