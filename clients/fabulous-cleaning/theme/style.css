@@ -1,2 +1,37 @@
 /* Premium visual layer for Fabulous Cleaning; the shared booking engine remains in klickspark-base. */
 :root{--fc-pine:#123b35;--fc-cream:#fbfaf6;--fc-mint:#e9f4ef;--fc-gold:#b18b58;--fc-muted:#65766e;--fc-width:1160px}body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#233d38}h1,h2,h3{letter-spacing:-.04em;line-height:1.18}a:focus-visible{outline:3px solid var(--fc-gold);outline-offset:3px}.fc-wrap{max-width:var(--fc-width);margin:auto;padding-left:22px;padding-right:22px}.fc-header{background:#fff;border-bottom:1px solid #e2e7df}.fc-nav{min-height:82px;display:flex;justify-content:space-between;align-items:center;gap:24px}.fc-brand{color:var(--fc-pine);font-size:1.15rem;font-weight:800;text-decoration:none}.fc-links{display:flex;gap:25px;align-items:center}.fc-links a{font-size:.9rem;text-decoration:none;font-weight:650}.fc-btn{display:inline-block;background:var(--fc-pine);color:#fff!important;padding:14px 24px;border-radius:6px;font-weight:700;text-decoration:none}.fc-btn--outline{background:transparent;color:var(--fc-pine)!important;border:1px solid #9bad9e}.fc-hero{background:var(--fc-cream);padding:85px 0}.fc-hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:6%;align-items:center}.fc-kicker{text-transform:uppercase;letter-spacing:.2em;color:var(--fc-gold);font-size:.73rem;font-weight:800}.fc-hero h1{font-size:clamp(2.7rem,5vw,5rem);margin:16px 0 22px;color:var(--fc-pine)}.fc-hero p{font-size:1.08rem;line-height:1.85;color:var(--fc-muted)}.fc-hero img{width:100%;height:480px;object-fit:cover;border-radius:150px 8px 8px 8px}.fc-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.fc-section{padding:90px 0}.fc-section--soft{background:var(--fc-cream)}.fc-center{text-align:center;max-width:700px;margin:0 auto 38px}.fc-center h2{font-size:clamp(2rem,3.6vw,3.3rem);margin:12px 0}.fc-center p,.fc-card p,.fc-step p{color:var(--fc-muted)}.fc-cards,.fc-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:23px}.fc-card{background:#fff;border:1px solid #e2e7df;border-radius:8px;overflow:hidden}.fc-card img{width:100%;height:225px;object-fit:cover;display:block}.fc-card-content{padding:25px}.fc-card h3{font-size:1.35rem;margin:0 0 12px}.fc-step{border-top:1px solid #cddbd2;padding-top:18px}.fc-step strong{font-size:2rem;color:#94b5a2}.fc-cta{background:var(--fc-pine);color:#fff;padding:70px 0}.fc-cta p{color:#c9e1d5}.fc-footer{background:#0e2f2a;color:#d6e4dc;padding:30px 0;font-size:.84rem}.fc-footer a{color:inherit}@media(max-width:740px){.fc-nav{min-height:72px;align-items:flex-start;flex-direction:column;justify-content:center;padding-top:12px;padding-bottom:12px}.fc-links{gap:16px;flex-wrap:wrap}.fc-links a{font-size:.82rem}.fc-hero{padding:55px 0}.fc-hero-grid,.fc-cards,.fc-steps{grid-template-columns:1fr}.fc-hero img{height:310px;border-radius:110px 8px 8px 8px}.fc-section{padding:60px 0}.fc-card img{height:220px}}
+
+/* Phase 1 visual refinement: editorial typography, breathing room and mobile polish. */
+:root{--fc-shadow:0 22px 65px rgba(18,59,53,.09)}
+html{scroll-behavior:smooth}
+body{background:var(--fc-cream);-webkit-font-smoothing:antialiased}
+.fc-header{position:relative;z-index:2}
+.fc-brand{display:inline-flex;align-items:center;gap:.45rem;letter-spacing:-.025em}
+.fc-links a{color:var(--fc-pine);transition:color .2s ease}
+.fc-links a:hover{color:#987142}
+.fc-hero{background:linear-gradient(115deg,#fbfaf6 0%,#f2f5ee 100%);overflow:hidden}
+.fc-hero-grid>div:first-child{max-width:610px}
+.fc-hero h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;letter-spacing:-.052em;line-height:1.05;font-size:clamp(3.15rem,5.4vw,5.9rem)}
+.fc-hero p{max-width:52ch}
+.fc-hero img{box-shadow:var(--fc-shadow);border-radius:210px 210px 12px 12px;aspect-ratio:4/5;height:auto;max-height:590px}
+.fc-kicker{display:inline-block;line-height:1.5}
+.fc-btn{border-radius:999px;transition:transform .2s ease,box-shadow .2s ease}
+.fc-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(18,59,53,.15)}
+.fc-btn--outline:hover{box-shadow:none;background:#edf2ea}
+.fc-ribbon{background:#e5eee6;border-top:1px solid #dce8df;border-bottom:1px solid #dce8df}
+.fc-ribbon-inner{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:15px;color:#45675b;font-size:.76rem;font-weight:750;letter-spacing:.07em;text-transform:uppercase}
+.fc-ribbon-inner span:nth-child(even){color:var(--fc-gold)}
+.fc-center h2,.fc-cta h2{font-family:Georgia,"Times New Roman",serif;font-weight:500;letter-spacing:-.035em}
+.fc-card{border-radius:16px;box-shadow:0 8px 32px rgba(18,59,53,.04);transition:transform .2s ease,box-shadow .2s ease}
+.fc-card:hover{transform:translateY(-4px);box-shadow:var(--fc-shadow)}
+.fc-card img{height:245px}
+.fc-card-content{padding:29px}
+.fc-card h3{color:var(--fc-pine)}
+.fc-step{padding:24px 12px 8px 0}
+.fc-step h3{color:var(--fc-pine)}
+.fc-cta{background:linear-gradient(120deg,#123b35,#1b5147)}
+.fc-cta h2{font-size:clamp(2.3rem,4vw,4rem);max-width:17ch;line-height:1.1}
+.fc-footer .fc-wrap{line-height:1.7}
+@media(max-width:900px){.fc-ribbon-inner{flex-wrap:wrap;justify-content:center;padding-top:17px;padding-bottom:17px;text-align:center}.fc-ribbon-inner span:last-child{display:none}}
+@media(max-width:740px){.fc-hero h1{font-size:clamp(2.9rem,10vw,4.4rem)}.fc-hero img{height:auto;max-height:430px;border-radius:150px 150px 10px 10px}.fc-ribbon-inner{font-size:.68rem}.fc-section{padding:64px 0}.fc-card img{height:230px}.fc-nav{gap:12px}.fc-links{gap:20px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.fc-btn,.fc-card{transition:none}.fc-btn:hover,.fc-card:hover{transform:none}}
