@@ -49,7 +49,7 @@ $_COOKIE[LOGGED_IN_COOKIE] = $logged_in;
 wp_set_current_user($user->ID);
 $nonce = wp_create_nonce("ks_quote_photo_" . (int) getenv("KS_QUOTE_ID"));
 echo "\nKS_AUTH_RESULT:" . AUTH_COOKIE . "=" . $cookie . "; " . LOGGED_IN_COOKIE . "=" . $logged_in . "|" . $nonce . "\n";
-' | sed -n 's/^KS_AUTH_RESULT://p' | tail -n 1 | tr -d '\r\n')"
+' | sed -n 's/.*KS_AUTH_RESULT://p' | tail -n 1 | tr -d '\r\n')"
 AUTH_COOKIES="${AUTH_DETAILS%%|*}"
 PHOTO_NONCE="${AUTH_DETAILS#*|}"
 if [[ "$AUTH_DETAILS" != *"|"* || -z "$AUTH_COOKIES" || ! "$PHOTO_NONCE" =~ ^[a-zA-Z0-9]+$ ]]; then
