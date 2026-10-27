@@ -39,3 +39,35 @@ test('builds deterministic child theme and preserves output by default', () => {
   assert.equal(fs.readFileSync(path.join(output,'manifest.json'),'utf8'), manifest);
   fs.rmSync(output,{recursive:true,force:true});
 });
+
+test('imports wizard YAML safely and rejects overwrite or mismatched IDs', () => {
+  const slug = 'ci-wizard-import-test';
+  const dir = path.join(root, 'clients', slug);
+  const source = path.join(root, 'generator', 'test', 'ci-wizard-import.yaml');
+  const built = path.join(root, 'generated', slug);
+  const yaml = 'client:\n  id: ' + slug + '\n  name: "Example Cleaning"\n  industry: cleaning\nmodules:\n  booking: false\n  payments: false\n  quotes: false\nbooking:\n  mode: slot\n';
+  try {
+    assert.equal(fs.existsSync(dir), false);
+    fs.writeFileSync(source, yaml);
+    const imported = run('import', slug, '--file', source);
+    assert.equal(imported.status, 0, imported.stderr);
+    assert.equal(fs.readFileSync(path.join(dir, 'site.yaml'), 'utf8'), yaml);
+    assert.equal(run('validate', slug).status, 0);
+    const build = run('build', slug);
+    assert.equal(build.status, 0, build.stderr);
+    const manifest = JSON.parse(fs.readFileSync(path.join(built, 'manifest.json'), 'utf8'));
+    assert.equal(manifest.client, slug);
+    assert.ok(manifest.files[`wp-content/themes/${slug}/config.php`]);
+    const generatedConfig = fs.readFileSync(path.join(built, 'wp-content', 'themes', slug, 'config.php'), 'utf8');
+    assert.match(generatedConfig, /"booking": false/);
+    assert.match(generatedConfig, /"quotes": false/);
+    assert.match(generatedConfig, /"payment": "none"/);
+    assert.notEqual(run('build', slug).status, 0, 'must not overwrite generated output without --force');
+    assert.notEqual(run('import', slug, '--file', source).status, 0);
+    assert.notEqual(run('import', '../unsafe', '--file', source).status, 0);
+  } finally {
+    fs.rmSync(source, {force:true});
+    fs.rmSync(built, {recursive:true,force:true});
+    fs.rmSync(dir, {recursive:true,force:true});
+  }
+});

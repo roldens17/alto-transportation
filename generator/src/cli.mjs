@@ -180,8 +180,32 @@ function create(slug) {
   atomicWrite(target, `client:\n  id: ${slug}\n  name: "REPLACE WITH BUSINESS NAME"\n  industry: ${industry}\nsite:\n  timezone: America/New_York\n  locale: en_US\nmodules:\n  booking: true\n  payments: true\nbooking:\n  mode: slot\npayments:\n  provider: woocommerce\n  currency: USD\n  test_mode: true\n`);
   console.log(`Created ${target}`);
 }
+function importConfig(slug) {
+  assertSlug(slug, 'client ID');
+  const source = option('--file');
+  if (!source || source.startsWith('-')) throw new Error('Usage: ks import <client> --file <downloaded-site.yaml>');
+  const resolved = path.resolve(source);
+  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) throw new Error('Import file not found.');
+  const raw = fs.readFileSync(resolved, 'utf8');
+  if (Buffer.byteLength(raw, 'utf8') > 65536) throw new Error('Config file too large.');
+  const cfg = readYaml(resolved);
+  if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg) || cfg.client?.id !== slug)
+    throw new Error('Imported client ID must match destination.');
+  assertSlug(cfg.client?.industry, 'industry');
+  if (!fs.existsSync(path.join(root, 'industries', cfg.client.industry, 'defaults.yaml')))
+    throw new Error('Unsupported industry.');
+  const target = path.join(root, 'clients', slug, 'site.yaml');
+  if (fs.existsSync(target)) throw new Error('Client config already exists; refusing overwrite.');
+  const dir = path.dirname(target);
+  fs.mkdirSync(dir, {recursive: true});
+  atomicWrite(target, raw);
+  try { load(slug); }
+  catch (error) { fs.rmSync(target, {force:true}); throw error; }
+  console.log(`Imported and validated ${target}. Review config before building; no deployment performed.`);
+}
 try {
   if (command === 'new') create(client);
+  else if (command === 'import') importConfig(client);
   else if (command === 'validate') { load(client); console.log(`Valid client configuration: ${client}`); }
   else if (command === 'build') build(client);
   else { console.error('Implemented: ks new, ks validate, ks build. Dev/deploy/verify/rollback are not implemented.'); process.exitCode = 2; }
