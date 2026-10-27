@@ -150,7 +150,7 @@ ${footer}
   };
   // Client-specific presentation overlays; shared framework and booking behavior remain unchanged.
   const visualDir = path.join(root, 'clients', slug, 'theme');
-  for (const relative of ['style.css', 'templates/front-page.html']) {
+  for (const relative of ['style.css', 'templates/front-page.html', 'templates/page-quote-request.html']) {
     const source = path.join(visualDir, relative);
     if (fs.existsSync(source)) {
       if (relative === 'style.css') files[relative] += '\n' + fs.readFileSync(source, 'utf8') + '\n';
