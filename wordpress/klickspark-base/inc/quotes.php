@@ -35,15 +35,25 @@ final class KS_Quotes {
 			'callback' => [ __CLASS__, 'submit' ],
 		] );
 	}
-	public static function form(): string {
+	public static function form( $atts = [] ): string {
 		wp_enqueue_script( 'ks-quote-form', get_template_directory_uri() . '/assets/js/quote-form.js', [], KS_BASE_VERSION, true );
+		$atts = shortcode_atts( [ 'services' => '' ], is_array( $atts ) ? $atts : [], 'klickspark_quote_form' );
+		$services = array_values( array_filter( array_map( 'trim', explode( '|', (string) $atts['services'] ) ) ) );
+		$service_field = '<input name="service" required maxlength="120">';
+		if ( $services ) {
+			$options = '<option value="">Choose a service</option>';
+			foreach ( array_slice( $services, 0, 30 ) as $service ) {
+				$options .= '<option value="' . esc_attr( $service ) . '">' . esc_html( $service ) . '</option>';
+			}
+			$service_field = '<select name="service" required>' . $options . '</select>';
+		}
 		$action = esc_url( rest_url( 'ks/v1/quote-request' ) );
 		$nonce = esc_attr( wp_create_nonce( 'wp_rest' ) );
 		return '<form class="ks-quote-form" method="post" enctype="multipart/form-data" action="' . $action . '" data-ks-rest-nonce="' . $nonce . '">'
 			. '<label>Name <input name="name" required maxlength="120"></label>'
 			. '<label>Email <input type="email" name="email" required maxlength="190"></label>'
 			. '<label>Phone <input name="phone" maxlength="40"></label>'
-			. '<label>Service <input name="service" required maxlength="120"></label>'
+			. '<label>Service ' . $service_field . '</label>'
 			. '<label>Describe the job <textarea name="description" required maxlength="5000"></textarea></label>'
 			. '<label>Project photos (up to 3 JPEG, PNG or WebP images, 5 MB each) <input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple></label>'
 			. '<label><input type="checkbox" name="consent" value="1" required> I agree to be contacted about this request.</label>'
