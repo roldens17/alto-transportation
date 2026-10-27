@@ -14,6 +14,7 @@ final class KS_Quotes {
 		add_action( 'admin_post_ks_quote_review', [ __CLASS__, 'review' ] );
 		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_scripts' ] );
 		add_action( 'admin_post_ks_quote_photo', [ __CLASS__, 'download_photo' ] );
+		add_action( 'before_delete_post', [ __CLASS__, 'delete_private_photos' ] );
 		add_filter( 'manage_ks_quote_posts_columns', [ __CLASS__, 'columns' ] );
 		add_action( 'manage_ks_quote_posts_custom_column', [ __CLASS__, 'column_value' ], 10, 2 );
 	}
@@ -179,6 +180,38 @@ final class KS_Quotes {
 		}
 		return $saved;
 	}
+	/** Remove private files when a quote is permanently deleted (not trashed). */
+	public static function delete_private_photos( int $id ): void {
+		if ( 'ks_quote' !== get_post_type( $id ) ) {
+			return;
+		}
+		$base = realpath( self::private_dir() );
+		if ( ! $base || ! is_dir( $base ) ) {
+			return;
+		}
+		$directories = [];
+		foreach ( (array) get_post_meta( $id, '_ks_quote_photos', true ) as $photo ) {
+			if ( ! is_array( $photo ) ) {
+				continue;
+			}
+			$path = realpath( $photo['path'] ?? '' );
+			if ( ! $path || ! is_file( $path ) || ! str_starts_with( $path, $base . DIRECTORY_SEPARATOR ) ) {
+				continue;
+			}
+			// Only remove files inside this quote's dedicated directory.
+			$dir = dirname( $path );
+			if ( ! preg_match( '/^quote-' . preg_quote( (string) $id, '/' ) . '-[a-zA-Z0-9]+$/', basename( $dir ) ) || dirname( $dir ) !== $base ) {
+				continue;
+			}
+			if ( @unlink( $path ) ) {
+				$directories[ $dir ] = true;
+			}
+		}
+		foreach ( array_keys( $directories ) as $dir ) {
+			@rmdir( $dir ); // Only removes empty quote directories.
+		}
+	}
+
 	public static function download_photo(): void {
 		$id = absint( $_GET['quote_id'] ?? 0 );
 		$index = absint( $_GET['index'] ?? 0 );
