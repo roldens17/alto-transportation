@@ -36,6 +36,23 @@ $bad->set_file_params( $files );
 if ( ! is_wp_error( KS_Quotes::submit( $bad ) ) ) {
 	fwrite( STDERR, "Invalid upload accepted\n" ); exit( 1 );
 }
+// Reject submissions without a valid REST nonce, before any record is created.
+$missing_nonce = clone $req;
+$missing_nonce->set_header( 'X-WP-Nonce', 'invalid-nonce' );
+$nonce_result = KS_Quotes::submit( $missing_nonce );
+if ( ! is_wp_error( $nonce_result ) || 'ks_nonce' !== $nonce_result->get_error_code() ) {
+	fwrite( STDERR, "Invalid REST nonce accepted\\n" ); exit( 1 );
+}
+// A valid upload shape with a PHP upload error must not create a quote.
+$upload_failure = clone $req;
+$upload_failure->set_file_params( [ 'photos' => [
+	'name' => [ 'photo.jpg' ], 'error' => [ UPLOAD_ERR_PARTIAL ],
+	'size' => [ 100 ], 'tmp_name' => [ '/tmp/missing' ],
+] ] );
+$upload_result = KS_Quotes::submit( $upload_failure );
+if ( ! is_wp_error( $upload_result ) || 'ks_photo_limit' !== $upload_result->get_error_code() ) {
+	fwrite( STDERR, "Partial upload accepted\\n" ); exit( 1 );
+}
 // Verify permanent deletion removes only this quote's private files.
 $private_root = ks_config( 'quotes.private_upload_dir' );
 if ( ! wp_mkdir_p( $private_root ) ) {
