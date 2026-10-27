@@ -5,6 +5,22 @@ BASE_URL=http://127.0.0.1:8080
 # Real HTTP request exercises PHP's is_uploaded_file() and move_uploaded_file().
 NONCE="$("${COMPOSE[@]}" run --rm -T wpcli eval 'echo wp_create_nonce("wp_rest");' | tr -d '\r\n')"
 test -n "$NONCE"
+# Verify the client-specific shortcode renders escaped service choices, while the shared
+# shortcode remains a reusable free-text form for other client industries.
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$selected = do_shortcode("[klickspark_quote_form services=\"Standard Cleaning|Deep Cleaning|Move-In / Move-Out|Other Cleaning\"]");
+if (strpos($selected, "<select name=\"service\" required>") === false ||
+    strpos($selected, "<option value=\"Deep Cleaning\">Deep Cleaning</option>") === false ||
+    strpos($selected, "<option value=\"Move-In / Move-Out\">Move-In / Move-Out</option>") === false) {
+    fwrite(STDERR, "Client-specific quote service dropdown missing\\n"); exit(1);
+}
+$generic = do_shortcode("[klickspark_quote_form]");
+if (strpos($generic, "<input name=\"service\" required") === false) {
+    fwrite(STDERR, "Reusable quote service input missing\\n"); exit(1);
+}
+echo "Quote service choices and generic fallback rendered\\n";
+'
+
 # A valid tiny PNG. The CI host creates the multipart body; Apache/PHP processes it.
 printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lS8AAAAASUVORK5CYII=' | base64 -d > /tmp/ks-ci-photo.png
 STATUS="$(curl -sS -o /tmp/ks-ci-response.json -w '%{http_code}' \
