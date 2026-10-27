@@ -12,9 +12,15 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 - [x] Delete files in the quote's dedicated directory when its post is permanently deleted, preserving unrelated files.
 - [x] General CI, generator, MariaDB integration, and WordPress smoke workflows passed on 85fac3d.
 
+## Additional verified integration evidence (commit fb81fd6)
+
+- [x] Real HTTP multipart PNG upload reaches WordPress/PHP, stores a private file, and removes it when the quote is permanently deleted.
+- [x] All four workflows passed on fb81fd6: general CI, generator, MariaDB booking integration, and WordPress runtime smoke.
+- [ ] Real HTTP JPEG/WebP and authorized photo-download response still require testing.
+
 ## Must verify before production
 
-- [ ] Run a **real HTTP multipart upload** (JPEG, PNG, WebP) against an isolated WordPress environment. WP-CLI tests cannot simulate PHP's `is_uploaded_file()` success path. Verify storage and authorized download of the uploaded bytes.
+- [ ] Complete real HTTP multipart coverage for JPEG and WebP, and verify authorized download of the uploaded bytes. PNG upload and cleanup are now covered; WP-CLI cannot simulate PHP's `is_uploaded_file()` success path.
 - [ ] Exercise oversized, non-image, excessive-count, partial, and failed storage uploads over HTTP; ensure no orphaned private files or incomplete quote records.
 - [ ] Inject a photo-metadata database-write failure and verify files and quote are removed; the cleanup branch is not yet directly covered by a failure-injection test.
 - [ ] Confirm private storage is an **absolute path outside the document root and WordPress installation**, with least-privilege filesystem ownership/permissions and no direct HTTP access. Do not store secrets or customer data in the repository.
