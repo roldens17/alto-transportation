@@ -11,7 +11,7 @@ add_filter( 'ks/config', static function ( $config ) {
 
 // CI-only failure injection: simulate a rejected metadata write for a specifically
 // named HTTP quote, after its photo has been moved into private storage.
-add_filter( 'update_post_metadata', static function ( $check, $object_id, $meta_key ) {
+$ks_fail_photo_metadata = static function ( $check, $object_id, $meta_key ) {
 	if ( '_ks_quote_photos' !== $meta_key || 'ks_quote' !== get_post_type( $object_id ) ) {
 		return $check;
 	}
@@ -20,4 +20,6 @@ add_filter( 'update_post_metadata', static function ( $check, $object_id, $meta_
 		return false;
 	}
 	return $check;
-}, 10, 3 );
+};
+add_filter( 'update_post_metadata', $ks_fail_photo_metadata, 10, 3 );
+add_filter( 'add_post_metadata', $ks_fail_photo_metadata, 10, 3 );
