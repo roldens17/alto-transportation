@@ -28,6 +28,7 @@ services:
       WORDPRESS_DEBUG: "1"
     volumes:
       - ks_wp:/var/www/html
+      - ks_private:/var/ks-private
       - ./wordpress/klickspark-base:/var/www/html/wp-content/themes/klickspark-base:ro
       - ./generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning:/var/www/html/wp-content/themes/fabulous-cleaning:ro
   wpcli:
@@ -53,3 +54,4 @@ services:
 volumes:
   ks_db:
   ks_wp:
+  ks_private:
