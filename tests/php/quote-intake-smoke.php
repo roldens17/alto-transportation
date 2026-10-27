@@ -134,6 +134,7 @@ try {
 if ( ! $denied ) {
 	fwrite( STDERR, "Photo outside private storage was not denied with 404\\n" ); exit( 1 );
 }
+require_once ABSPATH . 'wp-admin/includes/user.php';
 wp_delete_user( $admin_id );
 wp_delete_post( $quote_id, true );
 if ( file_exists( $photo_path ) || is_dir( $quote_dir ) || ! is_file( $other_path ) || ! is_file( $outside_path ) ) {
