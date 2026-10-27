@@ -44,7 +44,7 @@ test('imports wizard YAML safely and rejects overwrite or mismatched IDs', () =>
   const slug = 'ci-wizard-import-test';
   const dir = path.join(root, 'clients', slug);
   const source = path.join(root, 'generator', 'test', 'ci-wizard-import.yaml');
-  const yaml = 'client:\\n  id: ' + slug + '\\n  name: "Example Cleaning"\\n  industry: cleaning\\nmodules:\\n  booking: false\\n  payments: false\\n  quotes: false\\nbooking:\\n  mode: slot\\n';
+  const yaml = 'client:\n  id: ' + slug + '\n  name: "Example Cleaning"\n  industry: cleaning\nmodules:\n  booking: false\n  payments: false\n  quotes: false\nbooking:\n  mode: slot\n';
   try {
     assert.equal(fs.existsSync(dir), false);
     fs.writeFileSync(source, yaml);
