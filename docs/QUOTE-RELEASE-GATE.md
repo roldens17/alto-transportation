@@ -12,18 +12,18 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 - [x] Delete files in the quote's dedicated directory when its post is permanently deleted, preserving unrelated files.
 - [x] General CI, generator, MariaDB integration, and WordPress smoke workflows passed on 85fac3d.
 
-## Additional verified integration evidence (commit fb81fd6)
+## Additional verified integration evidence (through commit 631b8d3)
 
 - [x] Real HTTP multipart PNG upload reaches WordPress/PHP, stores a private file, and removes it when the quote is permanently deleted.
 - [x] All four workflows passed on fb81fd6: general CI, generator, MariaDB booking integration, and WordPress runtime smoke.
-- [ ] Real HTTP JPEG/WebP and authorized photo-download response still require testing.
+- [x] Real HTTP rejection of disguised non-image content, more than three photos, and a photo exceeding 5 MiB; no quote record created.\n- [x] Real HTTP anonymous download attempt denied.\n- [x] All four workflows passed on 631b8d3.\n- [ ] Real HTTP JPEG/WebP and authenticated administrator photo-download response still require testing.
 
 ## Must verify before production
 
 - [ ] Complete real HTTP multipart coverage for JPEG and WebP, and verify authorized download of the uploaded bytes. PNG upload and cleanup are now covered; WP-CLI cannot simulate PHP's `is_uploaded_file()` success path.
-- [ ] Exercise oversized, non-image, excessive-count, partial, and failed storage uploads over HTTP; ensure no orphaned private files or incomplete quote records.
+- [x] Exercise oversized, non-image, and excessive-count uploads over HTTP; each rejected before quote creation.\n- [ ] Exercise partial and failed storage uploads over HTTP; ensure no orphaned private files or incomplete quote records.
 - [ ] Inject a photo-metadata database-write failure and verify files and quote are removed; the cleanup branch is not yet directly covered by a failure-injection test.
-- [ ] Confirm private storage is an **absolute path outside the document root and WordPress installation**, with least-privilege filesystem ownership/permissions and no direct HTTP access. Do not store secrets or customer data in the repository.
+- [ ] Confirm private storage is an **absolute path outside the document root and WordPress installation**, with least-privilege filesystem ownership/permissions and no direct HTTP access. CI uses `/var/ks-private` in a dedicated Docker volume; each production host must be checked separately. Do not store secrets or customer data in the repository.
 - [ ] Decide and document quote/contact/photo retention period, deletion policy, backups, and how client data removal requests are handled. Permanent deletion triggers file cleanup; merely trashing a quote does not.
 - [ ] Confirm the client-facing form includes appropriate privacy/consent language, and that notification emails contain no sensitive photos.
 - [ ] Review rate limiting behind reverse proxies/CDNs and production request-size limits; the current limit uses `REMOTE_ADDR` and WordPress transients.
