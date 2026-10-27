@@ -13,17 +13,13 @@ branding:
   text: "#172C2A"
 modules:
   booking: true
-  payments: true
+  payments: false
 booking:
   mode: slot
   resource_type: crew
   min_lead_hours: 24
   max_days_ahead: 60
   require_address: true
-payments:
-  provider: woocommerce
-  currency: USD
-  test_mode: true
 content:
   contact_email: ""
   phone: ""
