@@ -25,7 +25,7 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 
 - [x] Real HTTP multipart JPEG and WebP upload, MIME metadata and permanent-delete cleanup passed in WordPress runtime CI on `9f8ab55`. PNG authorized download was verified separately.
 - [x] Exercise oversized, non-image, and excessive-count uploads over HTTP; each rejected before quote creation. 
-- [ ] Exercise a *mid-batch file-move failure* over real HTTP (after at least one successful private file write); verify no orphaned private files or incomplete quote records. PHP `UPLOAD_ERR_PARTIAL` rejection and photo-metadata-write failure are already covered.
+- [x] Mid-batch second-photo move failure over real HTTP after the first private file write: verifies 503, no orphaned private quote directory, and no incomplete quote record (all four CI workflows green on `79dc5a6`). PHP `UPLOAD_ERR_PARTIAL` rejection and photo-metadata-write failure are also covered.
 - [x] Inject a photo-metadata database-write failure over real HTTP and verify files and quote are removed (passed on 4fd548c).
 - [ ] Confirm private storage is an **absolute path outside the document root and WordPress installation**, with least-privilege filesystem ownership/permissions and no direct HTTP access. CI uses `/var/ks-private` in a dedicated Docker volume; each production host must be checked separately. Do not store secrets or customer data in the repository.
 - [ ] Decide and document quote/contact/photo retention period, deletion policy, backups, and how client data removal requests are handled. Permanent deletion triggers file cleanup; merely trashing a quote does not.
