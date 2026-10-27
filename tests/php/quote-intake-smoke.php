@@ -36,4 +36,28 @@ $bad->set_file_params( $files );
 if ( ! is_wp_error( KS_Quotes::submit( $bad ) ) ) {
 	fwrite( STDERR, "Invalid upload accepted\n" ); exit( 1 );
 }
-echo "Quote intake validation and private record smoke passed\n";
+// Verify permanent deletion removes only this quote's private files.
+$private_root = ks_config( 'quotes.private_upload_dir' );
+if ( ! wp_mkdir_p( $private_root ) ) {
+	fwrite( STDERR, "Cannot create isolated private test directory\\n" ); exit( 1 );
+}
+$quote_id = $quotes[0]->ID;
+$quote_dir = $private_root . '/quote-' . $quote_id . '-testtoken';
+if ( ! wp_mkdir_p( $quote_dir ) ) {
+	fwrite( STDERR, "Cannot create quote test directory\\n" ); exit( 1 );
+}
+$photo_path = $quote_dir . '/photo.jpg';
+$other_path = $private_root . '/unrelated.jpg';
+file_put_contents( $photo_path, 'private-test-photo' );
+file_put_contents( $other_path, 'unrelated-file-must-survive' );
+update_post_meta( $quote_id, '_ks_quote_photos', [
+	[ 'path' => $photo_path, 'mime' => 'image/jpeg' ],
+	[ 'path' => $other_path, 'mime' => 'image/jpeg' ],
+] );
+wp_delete_post( $quote_id, true );
+if ( file_exists( $photo_path ) || is_dir( $quote_dir ) || ! is_file( $other_path ) ) {
+	fwrite( STDERR, "Private quote photo cleanup failed or deleted unrelated file\\n" ); exit( 1 );
+}
+unlink( $other_path );
+rmdir( $private_root );
+echo "Quote intake, private record and photo cleanup smoke passed\\n";
