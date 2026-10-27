@@ -19,11 +19,11 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 - [x] Real HTTP rejection of disguised non-image content, more than three photos, and a photo exceeding 5 MiB; no quote record created. 
 - [x] Real HTTP anonymous download attempt denied. 
 - [x] All four workflows passed on 631b8d3. 
-- [ ] Real HTTP JPEG/WebP and authenticated administrator photo-download response still require testing. The administrator test was added in 0fb254c; do not mark verified until WordPress CI passes.
+- [x] Authenticated administrator photo download over real HTTP returned the original PNG bytes, with anonymous access denied (green runtime workflow on b83d672). JPEG/WebP remain unverified over real HTTP.
 
 ## Must verify before production
 
-- [ ] Complete real HTTP multipart coverage for JPEG and WebP, and verify authorized download of the uploaded bytes. PNG upload and cleanup are now covered; WP-CLI cannot simulate PHP's `is_uploaded_file()` success path.
+- [ ] Complete real HTTP multipart coverage for JPEG and WebP. Authorized PNG download bytes are verified; WP-CLI cannot simulate PHP's `is_uploaded_file()` success path.
 - [x] Exercise oversized, non-image, and excessive-count uploads over HTTP; each rejected before quote creation. 
 - [ ] Exercise partial and failed storage uploads over HTTP; ensure no orphaned private files or incomplete quote records.
 - [x] Inject a photo-metadata database-write failure over real HTTP and verify files and quote are removed (passed on 4fd548c).
@@ -32,6 +32,13 @@ Status: **NOT APPROVED FOR PRODUCTION**. Keep PR #13 draft until the owner revie
 - [ ] Confirm the client-facing form includes appropriate privacy/consent language, and that notification emails contain no sensitive photos.
 - [ ] Review rate limiting behind reverse proxies/CDNs and production request-size limits; the current limit uses `REMOTE_ADDR` and WordPress transients.
 - [ ] Run a final CI pass on the intended merge commit and obtain explicit owner approval before merge or deployment.
+
+## Current automated evidence (2026-10-27)
+
+- [x] All four workflows passed on `90f0f1d`: general CI, generator, MariaDB integration, and WordPress runtime smoke.
+- [x] WordPress runtime renders the cleaning-specific service dropdown and generic reusable input.
+- [x] Fabulous Cleaning generator produces `booking.payment = none`, and payments are disabled in its source configuration.
+- [ ] A passing CI workflow does **not** verify private storage configuration, data retention, proxy controls or privacy notices on a production host.
 
 ## Current implementation notes
 
