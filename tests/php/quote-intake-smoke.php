@@ -113,8 +113,10 @@ if ( is_wp_error( $admin_id ) ) {
 }
 $original_user = get_current_user_id();
 $original_get = $_GET;
+$original_request = $_REQUEST;
 wp_set_current_user( $admin_id );
 $_GET = [ 'quote_id' => $quote_id, 'index' => 0, '_wpnonce' => wp_create_nonce( 'ks_quote_photo_' . $quote_id ) ];
+$_REQUEST = array_merge( $_REQUEST, $_GET );
 $deny_handler = static function () {
 	return static function ( $message, $title = '', $args = [] ) {
 		throw new RuntimeException( 'ks_photo_denied:' . (int) ( $args['response'] ?? 0 ) );
@@ -129,6 +131,7 @@ try {
 } finally {
 	remove_filter( 'wp_die_handler', $deny_handler );
 	$_GET = $original_get;
+	$_REQUEST = $original_request;
 	wp_set_current_user( $original_user );
 }
 if ( ! $denied ) {
