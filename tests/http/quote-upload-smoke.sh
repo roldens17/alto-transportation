@@ -18,7 +18,7 @@ $generic = do_shortcode("[klickspark_quote_form]");
 if (strpos($generic, "<input name=\"service\" required") === false) {
     fwrite(STDERR, "Reusable quote service input missing\\n"); exit(1);
 }
-$escaped = do_shortcode("[klickspark_quote_form services='Safe Cleaning|<script>alert(1)</script>']");
+$escaped = do_shortcode("[klickspark_quote_form services=\"Safe Cleaning|<script>alert(1)</script>\"]");
 if (strpos($escaped, "<script>alert(1)</script>") !== false ||
     strpos($escaped, "&lt;script&gt;alert(1)&lt;/script&gt;") === false) {
     fwrite(STDERR, "Quote service option HTML escaping failed\\n"); exit(1);
