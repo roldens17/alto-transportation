@@ -39,3 +39,25 @@ test('builds deterministic child theme and preserves output by default', () => {
   assert.equal(fs.readFileSync(path.join(output,'manifest.json'),'utf8'), manifest);
   fs.rmSync(output,{recursive:true,force:true});
 });
+
+test('new client scaffolds with risky modules disabled and refuses overwrite', () => {
+  const slug = 'ci-safe-scaffold-test';
+  const dir = path.join(root, 'clients', slug);
+  try {
+    assert.equal(fs.existsSync(dir), false, 'test client directory must not preexist');
+    const created = run('new', slug, '--industry', 'cleaning');
+    assert.equal(created.status, 0, created.stderr);
+    const config = fs.readFileSync(path.join(dir, 'site.yaml'), 'utf8');
+    assert.match(config, /booking: false/);
+    assert.match(config, /payments: false/);
+    assert.match(config, /quotes: false/);
+    assert.doesNotMatch(config, /provider: woocommerce/);
+    const validated = run('validate', slug);
+    assert.equal(validated.status, 0, validated.stderr);
+    const second = run('new', slug, '--industry', 'cleaning');
+    assert.notEqual(second.status, 0, 'must not overwrite client configuration');
+    assert.equal(fs.readFileSync(path.join(dir, 'site.yaml'), 'utf8'), config);
+  } finally {
+    fs.rmSync(dir, {recursive: true, force: true});
+  }
+});
