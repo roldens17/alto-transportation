@@ -132,7 +132,7 @@ try {
 	wp_set_current_user( $original_user );
 }
 if ( ! $denied ) {
-	fwrite( STDERR, "Photo outside private storage was not denied with 404\\n" ); exit( 1 );
+	fwrite( STDERR, "Photo outside private storage denial mismatch (check handler response)\\n" ); exit( 1 );
 }
 require_once ABSPATH . 'wp-admin/includes/user.php';
 wp_delete_user( $admin_id );
