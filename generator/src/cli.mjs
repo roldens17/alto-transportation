@@ -177,7 +177,7 @@ function create(slug) {
   const dir = path.join(root, 'clients', slug);
   fs.mkdirSync(dir, { recursive: true });
   const target = path.join(dir, 'site.yaml');
-  atomicWrite(target, `client:\n  id: ${slug}\n  name: "REPLACE WITH BUSINESS NAME"\n  industry: ${industry}\nsite:\n  timezone: America/New_York\n  locale: en_US\nmodules:\n  booking: true\n  payments: true\nbooking:\n  mode: slot\npayments:\n  provider: woocommerce\n  currency: USD\n  test_mode: true\n`);
+  atomicWrite(target, `client:\n  id: ${slug}\n  name: "REPLACE WITH BUSINESS NAME"\n  industry: ${industry}\nsite:\n  timezone: America/New_York\n  locale: en_US\nmodules:\n  booking: false\n  payments: false\n  quotes: false\nbooking:\n  mode: slot\n`);
   console.log(`Created ${target}`);
 }
 try {
