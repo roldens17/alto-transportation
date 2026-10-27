@@ -56,7 +56,7 @@ if [[ "$LOGIN_STATUS" != 200 ]] || ! grep -Eq 'wp-admin-bar|wpadminbar|id="wpbod
   exit 1
 fi
 curl -fsS -b "$COOKIE_JAR" "$BASE_URL/wp-admin/post.php?post=$QUOTE_ID&action=edit" -o /tmp/ks-ci-quote-admin.html
-PHOTO_NONCE="$(grep -oE 'ks_quote_photo_[^" ]+|_wpnonce=[a-zA-Z0-9]+' /tmp/ks-ci-quote-admin.html | grep '^_wpnonce=' | head -n 1 | cut -d= -f2 || true)"
+PHOTO_NONCE="$(grep -oE 'action=ks_quote_photo[^"]+' /tmp/ks-ci-quote-admin.html | head -n 1 | grep -oE '_wpnonce=[a-zA-Z0-9]+' | cut -d= -f2 || true)"
 if [[ -z "$PHOTO_NONCE" ]]; then
   echo "Quote edit screen did not expose photo download nonce"
   exit 1
