@@ -108,6 +108,16 @@ echo "Real HTTP multipart upload and cleanup passed\n";
 '
 
 
+# Reject a failed PHP multipart upload without persisting a quote or photo.
+# An empty filename produces UPLOAD_ERR_NO_FILE and is treated as optional;
+# a nonempty invalid image is tested below.
+# Verify private storage is not reachable by direct HTTP from this test host.
+PRIVATE_HTTP_STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE_URL/var/ks-private/")"
+if [[ "$PRIVATE_HTTP_STATUS" == 200 ]]; then
+  echo "Private storage URL unexpectedly reachable"; exit 1
+fi
+echo "Private storage path not publicly served: HTTP $PRIVATE_HTTP_STATUS"
+
 # Reject a disguised non-image over real HTTP before a quote is created.
 printf 'not an image' > /tmp/ks-ci-invalid.png
 BAD_STATUS="$(curl -sS -o /tmp/ks-ci-invalid-response.json -w '%{http_code}' \
