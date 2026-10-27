@@ -23,3 +23,12 @@ $ks_fail_photo_metadata = static function ( $check, $object_id, $meta_key ) {
 };
 add_filter( 'update_post_metadata', $ks_fail_photo_metadata, 10, 3 );
 add_filter( 'add_post_metadata', $ks_fail_photo_metadata, 10, 3 );
+
+ // CI-only: reject the second photo move after the first has been saved.
+add_filter( 'ks_quote_allow_photo_move', static function ( $allow, $quote_id, $index ) {
+  $post = get_post( $quote_id );
+  if ( $post && 'HTTP Mid-Batch Failure — Cleaning' === $post->post_title && 1 === $index ) {
+    return false;
+  }
+  return $allow;
+}, 10, 3 );
