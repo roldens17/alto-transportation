@@ -77,3 +77,24 @@ $posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_pe
 if ($posts) { fwrite(STDERR, "Excess photo count created a quote record\n"); exit(1); }
 echo "Excess photo count rejected without creating a quote\n";
 '
+
+
+# Verify a real HTTP oversized image is rejected before record creation.
+# The size check must run before decoding the image, so a 5 MiB+ file is sufficient.
+truncate -s 5242881 /tmp/ks-ci-oversized.png
+SIZE_STATUS="$(curl -sS -o /tmp/ks-ci-size-response.json -w '%{http_code}' \
+  -H "X-WP-Nonce: $NONCE" \
+  -F 'name=HTTP Oversized Image' -F 'email=oversized@example.test' \
+  -F 'service=Cleaning' -F 'description=Oversized image rejection regression' \
+  -F 'consent=1' -F 'photos[]=@/tmp/ks-ci-oversized.png;type=image/png' \
+  "$BASE_URL/?rest_route=/ks/v1/quote-request")"
+if [[ "$SIZE_STATUS" != 400 ]]; then
+  echo "Oversized image expected 400, got: $SIZE_STATUS"
+  cat /tmp/ks-ci-size-response.json
+  exit 1
+fi
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$posts = get_posts(["post_type"=>"ks_quote", "post_status"=>"private", "posts_per_page"=>-1, "s"=>"HTTP Oversized Image"]);
+if ($posts) { fwrite(STDERR, "Oversized image created a quote record\n"); exit(1); }
+echo "Oversized image rejected without creating a quote\n";
+'
