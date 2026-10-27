@@ -223,7 +223,9 @@ final class KS_Quotes {
 		$photo = $photos[ $index ] ?? null;
 		$base = realpath( self::private_dir() );
 		$path = $photo ? realpath( $photo['path'] ?? '' ) : false;
-		if ( ! $base || ! $path || ! str_starts_with( $path, $base . DIRECTORY_SEPARATOR ) || ! is_file( $path ) ) {
+		$dir = $path ? dirname( $path ) : '';
+		$quote_directory = $dir && preg_match( '/^quote-' . preg_quote( (string) $id, '/' ) . '-[a-zA-Z0-9]+$/', basename( $dir ) ) && dirname( $dir ) === $base;
+		if ( ! $base || ! $path || ! is_file( $path ) || ! $quote_directory ) {
 			wp_die( 'Photo not found.', '', [ 'response' => 404 ] );
 		}
 		nocache_headers();
