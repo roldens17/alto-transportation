@@ -223,6 +223,9 @@ final class KS_Quotes {
 		check_admin_referer( 'ks_quote_photo_' . $id );
 		$photos = (array) get_post_meta( $id, '_ks_quote_photos', true );
 		$photo = $photos[ $index ] ?? null;
+		if ( ! is_array( $photo ) ) {
+			wp_die( 'Photo not found.', '', [ 'response' => 404 ] );
+		}
 		$base = realpath( self::private_dir() );
 		$path = $photo ? realpath( $photo['path'] ?? '' ) : false;
 		$dir = $path ? dirname( $path ) : '';
