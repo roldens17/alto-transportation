@@ -108,15 +108,19 @@ echo "Real HTTP multipart upload and cleanup passed\n";
 '
 
 
-# Reject a failed PHP multipart upload without persisting a quote or photo.
-# An empty filename produces UPLOAD_ERR_NO_FILE and is treated as optional;
-# a nonempty invalid image is tested below.
-# Verify private storage is not reachable by direct HTTP from this test host.
-PRIVATE_HTTP_STATUS="$(curl -sS -o /dev/null -w '%{http_code}' "$BASE_URL/var/ks-private/")"
-if [[ "$PRIVATE_HTTP_STATUS" == 200 ]]; then
-  echo "Private storage URL unexpectedly reachable"; exit 1
+# WordPress may return a 200 homepage for nonexistent URLs, so test a unique
+# private-file sentinel and verify its exact bytes cannot be served publicly.
+"${COMPOSE[@]}" run --rm -T wpcli eval '
+$base = "/var/ks-private";
+if (!is_dir($base) || !is_writable($base)) { fwrite(STDERR, "Private storage unavailable\\n"); exit(1); }
+file_put_contents($base . "/ks-http-private-sentinel.txt", "KS_PRIVATE_SENTINEL_DO_NOT_SERVE_2026");
+'
+PRIVATE_BODY="$(curl -sS "$BASE_URL/var/ks-private/ks-http-private-sentinel.txt")"
+"${COMPOSE[@]}" run --rm -T wpcli eval '@unlink("/var/ks-private/ks-http-private-sentinel.txt");'
+if [[ "$PRIVATE_BODY" == *"KS_PRIVATE_SENTINEL_DO_NOT_SERVE_2026"* ]]; then
+  echo "Private storage sentinel publicly served"; exit 1
 fi
-echo "Private storage path not publicly served: HTTP $PRIVATE_HTTP_STATUS"
+echo "Private storage sentinel not publicly served over HTTP"
 
 # Reject a disguised non-image over real HTTP before a quote is created.
 printf 'not an image' > /tmp/ks-ci-invalid.png
