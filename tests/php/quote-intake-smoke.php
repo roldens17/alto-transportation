@@ -95,10 +95,51 @@ try {
 if ( ! $denied ) {
 	fwrite( STDERR, "Unauthenticated photo download was not denied with 403\\n" ); exit( 1 );
 }
+// Even an administrator cannot use quote metadata to read a file outside private storage.
+$outside_path = tempnam( sys_get_temp_dir(), 'ks-outside-' );
+file_put_contents( $outside_path, 'unrelated-private-file' );
+update_post_meta( $quote_id, '_ks_quote_photos', [
+	[ 'path' => $outside_path, 'mime' => 'image/jpeg' ],
+	[ 'path' => $photo_path, 'mime' => 'image/jpeg' ],
+] );
+$admin_id = wp_insert_user( [
+	'user_login' => 'ks_quote_ci_admin_' . wp_generate_password( 8, false, false ),
+	'user_pass' => wp_generate_password( 24 ),
+	'user_email' => 'ks-quote-ci-admin-' . wp_generate_password( 8, false, false ) . '@example.test',
+	'role' => 'administrator',
+] );
+if ( is_wp_error( $admin_id ) ) {
+	fwrite( STDERR, "Cannot create test administrator\\n" ); exit( 1 );
+}
+$original_user = get_current_user_id();
+$original_get = $_GET;
+wp_set_current_user( $admin_id );
+$_GET = [ 'quote_id' => $quote_id, 'index' => 0, '_wpnonce' => wp_create_nonce( 'ks_quote_photo_' . $quote_id ) ];
+$deny_handler = static function () {
+	return static function ( $message, $title = '', $args = [] ) {
+		throw new RuntimeException( 'ks_photo_denied:' . (int) ( $args['response'] ?? 0 ) );
+	};
+};
+add_filter( 'wp_die_handler', $deny_handler );
+$denied = false;
+try {
+	KS_Quotes::download_photo();
+} catch ( RuntimeException $error ) {
+	$denied = 'ks_photo_denied:404' === $error->getMessage();
+} finally {
+	remove_filter( 'wp_die_handler', $deny_handler );
+	$_GET = $original_get;
+	wp_set_current_user( $original_user );
+}
+if ( ! $denied ) {
+	fwrite( STDERR, "Photo outside private storage was not denied with 404\\n" ); exit( 1 );
+}
+wp_delete_user( $admin_id );
 wp_delete_post( $quote_id, true );
-if ( file_exists( $photo_path ) || is_dir( $quote_dir ) || ! is_file( $other_path ) ) {
+if ( file_exists( $photo_path ) || is_dir( $quote_dir ) || ! is_file( $other_path ) || ! is_file( $outside_path ) ) {
 	fwrite( STDERR, "Private quote photo cleanup failed or deleted unrelated file\\n" ); exit( 1 );
 }
+unlink( $outside_path );
 unlink( $other_path );
 rmdir( $private_root );
 echo "Quote intake, private record and photo cleanup smoke passed\\n";
