@@ -12,6 +12,14 @@ add_action( 'init', function () {
 	}
 } );
 
+/** Plain-text price formatting for booking forms, including sites without WooCommerce. */
+function ks_format_booking_price( float $price ): string {
+	if ( 'woo' === ks_config( 'booking.payment', 'woo' ) && function_exists( 'wc_price' ) ) {
+		return html_entity_decode( wp_strip_all_tags( wc_price( $price ) ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+	}
+	return (string) ks_config( 'booking.currency', 'USD' ) . ' ' . number_format_i18n( $price, 2 );
+}
+
 /** Data the booking form needs on first paint, so it renders without a round trip. */
 function ks_booking_bootstrap_data(): array {
 	$cfg = ks_config( 'booking' );
