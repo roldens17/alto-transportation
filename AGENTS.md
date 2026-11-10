@@ -59,6 +59,8 @@ Some existing docs were written during earlier phases and may be outdated. **Ver
 
 ### Booking review corrections in progress
 
+Draft PR #20: https://github.com/roldens17/alto-transportation/pull/20
+
 Branch: `fix/booking-intake-review`. These changes are proposed, not merged or deployed:
 
 1. Validate no-payment submissions against the same calendar as paid bookings, including published service/crew identity, assignments, working hours, time off and exact offered starts; reserve turnaround buffers.

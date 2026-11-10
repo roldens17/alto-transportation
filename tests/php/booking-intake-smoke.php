@@ -85,15 +85,37 @@ try {
 	update_post_meta( $off, 'end_datetime', $day->setTime( 12, 0 )->format( 'Y-m-d H:i:s' ) );
 	$reject( [], 'Accepted crew time off' );
 	wp_delete_post( $off, true );
+	// Failed pending transitions must not strand contact records or reservations.
+	global $wpdb;
+	$before_enquiries = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ks_enquiry'" );
+	$before_slots = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . KS_Slot_Store::table() );
+	$injected = false;
+	$fail_pending = static function ( string $sql ) use ( &$injected ): string {
+		if ( str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, KS_Slot_Store::table() ) && str_contains( $sql, "`status` = 'pending'" ) ) {
+			$injected = true;
+			return 'SELECT 1 WHERE 1 = 0';
+		}
+		return $sql;
+	};
+	add_filter( 'query', $fail_pending );
+	try {
+		$failed = $submit( [ 'time' => '13:00' ] );
+	} finally {
+		remove_filter( 'query', $fail_pending );
+	}
+	ks_booking_assert( $injected && 503 === $failed->get_status(), 'Pending transition failure not reported' );
+	ks_booking_assert( $before_enquiries === (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ks_enquiry'" ), 'Failed request stranded an enquiry' );
+	ks_booking_assert( $before_slots === (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . KS_Slot_Store::table() ), 'Failed request stranded a hold' );
 	$rendered = do_blocks( '<!-- wp:ks/appointment-picker /-->' );
 	ks_booking_assert( str_contains( $rendered, 'USD 123.00' ), 'Priced no-payment picker failed without WooCommerce' );
 	ob_start();
 	do_action( 'admin_notices' );
 	$notices = ob_get_clean();
 	ks_booking_assert( ! str_contains( $notices, 'WooCommerce' ) && ! str_contains( $notices, 'container product' ), 'No-payment site requires payment dependencies' );
+	// Ignore fixture-setup notifications (WordPress emails when admin_email changes).
+	$mail = [];
 	$accepted = $submit();
 	ks_booking_assert( ! empty( $accepted->get_data()['ok'] ) && ! empty( $accepted->get_data()['pending'] ), 'Valid request not accepted for review' );
-	global $wpdb;
 	$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . KS_Slot_Store::table() . ' WHERE practitioner_id = %d', $crew ) );
 	ks_booking_assert( $row && 'pending' === $row->status, 'Request not pending' );
 	ks_booking_assert( 90 * 60 === strtotime( $row->end_utc . ' UTC' ) - strtotime( $row->start_utc . ' UTC' ), 'Turnaround buffer was not stored' );
@@ -102,7 +124,7 @@ try {
 	$reject( [ 'time' => '11:00' ], 'Accepted appointment during existing turnaround buffer' );
 	$expected_recipient = sanitize_email( (string) ks_config( 'booking.notify_email' ) );
 	if ( ! is_email( $expected_recipient ) ) { $expected_recipient = 'booking-admin@example.test'; }
-	ks_booking_assert( 2 === count( $mail ) && $expected_recipient === $mail[1]['to'], 'Business notification recipient incorrect' );
+	ks_booking_assert( 2 === count( $mail ) && $expected_recipient === $mail[1]['to'], 'Business notification recipient incorrect: ' . wp_json_encode( array_column( $mail, 'to' ) ) );
 	ks_booking_assert( 'booking-customer@example.test' === $mail[0]['to'], 'Customer notification missing' );
 	// Legacy published records must receive the same protections without rewriting customer data.
 	$legacy = $make_post( 'ks_enquiry' );
@@ -125,9 +147,9 @@ try {
 	}
 	echo "No-payment booking validation, buffers, privacy, rendering and notifications passed\n";
 } finally {
-	remove_filter( 'pre_wp_mail', $capture_mail, 10 );
 	wp_set_current_user( $original_user );
 	update_option( 'admin_email', $original_email );
+	remove_filter( 'pre_wp_mail', $capture_mail, 10 );
 	if ( isset( $crew ) ) {
 		global $wpdb;
 		$wpdb->delete( KS_Slot_Store::table(), [ 'practitioner_id' => $crew ] );
