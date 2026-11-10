@@ -13,6 +13,7 @@
     "color": { "background": true, "text": true }
   },
   "attributes": {
+    "personLabel": { "type": "string", "default": "Practitioner" },
     "heading": { "type": "string", "default": "Book an appointment" },
     "serviceId": { "type": "number", "default": 0 },
     "practitionerId": { "type": "number", "default": 0 },

@@ -21,7 +21,9 @@ if [[ "${WP_ADMIN_EMAIL}" == *example.invalid ]]; then
 fi
 compose=(docker compose --env-file .env -f docker-compose.klickspark.yml)
 node generator/src/cli.mjs build fabulous-cleaning --force
-"${compose[@]}" up -d db wordpress mailpit
+"${compose[@]}" up -d db mailpit
+# Refresh the child-theme bind mount after --force replaced its source directory.
+"${compose[@]}" up -d --force-recreate wordpress
 for i in $(seq 1 40); do
   if "${compose[@]}" run --rm -T wpcli core version >/dev/null 2>&1; then
     break

@@ -71,7 +71,7 @@ class KS_Slot_Woo {
 		}
 
 		$duration = KS_Slot_Engine::duration( $request->service );
-		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $request->service ) ?: 0 ) );
+		$buffer   = max( 0, (int) ( ks_booking_field( 'buffer_minutes', $request->service ) ?: 0 ) );
 		$cart_key = wp_generate_uuid4();
 		$hold     = KS_Slot_Store::hold( $request->practitioner, $request->service, $start, $duration + $buffer, $cart_key );
 

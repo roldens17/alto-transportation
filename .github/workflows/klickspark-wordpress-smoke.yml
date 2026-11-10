@@ -8,6 +8,8 @@ on:
       - 'generator/**'
       - 'clients/**'
       - 'scripts/klickspark-provision.sh'
+      - 'scripts/klickspark-preview.sh'
+      - 'scripts/preview-booking-seed.php'
       - 'docker-compose.klickspark.yml'
       - '.github/workflows/klickspark-wordpress-smoke.yml'
   workflow_dispatch:
@@ -42,6 +44,19 @@ jobs:
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli theme is-active fabulous-cleaning
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval 'if (!post_type_exists("ks_service")) { fwrite(STDERR, "Missing service post type\n"); exit(1); }'
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli post list --post_type=page --format=count | grep -Eq '^[1-9][0-9]*$'
+      - name: Verify opt-in local booking demo without ACF or WooCommerce
+        run: |
+          compose=(docker compose --env-file .env -f docker-compose.klickspark.yml)
+          if "${compose[@]}" run --rm -T wpcli eval-file /opt/klickspark/preview-booking-seed.php; then
+            echo 'Demo seed ran without explicit opt-in' >&2; exit 1
+          fi
+          "${compose[@]}" run --rm -T -e KS_PREVIEW_BOOKING_DEMO=1 wpcli eval-file /opt/klickspark/preview-booking-seed.php
+          "${compose[@]}" run --rm -T -e KS_PREVIEW_BOOKING_DEMO=1 wpcli eval-file /opt/klickspark/preview-booking-seed.php
+          "${compose[@]}" run --rm -T wpcli eval '$demo = get_posts(["post_type"=>"ks_service","meta_key"=>"_ks_preview_booking_demo","posts_per_page"=>-1]); $draft = get_posts(["post_type"=>"ks_service","post_status"=>"draft","posts_per_page"=>-1]); if (count($demo) !== 3 || count($draft) !== 3 || function_exists("get_field")) { WP_CLI::error("Unexpected native demo seed state"); }'
+          curl --fail -sS http://127.0.0.1:8080/booking/ -o /tmp/klickspark-booking.html
+          grep -q 'Local booking demo' /tmp/klickspark-booking.html
+          grep -q 'data-ks-appt' /tmp/klickspark-booking.html
+          grep -q 'Standard Cleaning (Demo)' /tmp/klickspark-booking.html
       - name: Test quote intake in real WordPress
         run: |
           docker compose --env-file .env -f docker-compose.klickspark.yml exec -T wordpress chown 33:33 /var/ks-private

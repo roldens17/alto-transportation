@@ -16,10 +16,3 @@ add_filter( 'ks/config', static function ( array $config ): array {
 	$config['booking']['notify_email'] = getenv( 'KS_BOOKING_CI_NOTIFY' ) ?: '';
 	return $config;
 } );
-// CI has no licensed ACF Pro. Exercise the actual calendar and database with
-// equivalent fixture values, without replacing any booking implementation.
-if ( ! function_exists( 'get_field' ) ) {
-	function get_field( $name, $post_id = false ) {
-		return get_post_meta( (int) $post_id, $name, true );
-	}
-}

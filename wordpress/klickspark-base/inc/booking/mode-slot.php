@@ -34,8 +34,8 @@ class KS_Slot_Engine {
 	 */
 	public static function slots_for_day( int $practitioner, int $service, DateTimeImmutable $day ): array {
 		$duration = self::duration( $service );
-		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $service ) ?: 0 ) );
-		$step     = (int) ( get_field( 'slot_interval', $practitioner ) ?: ks_config( 'booking.time_step_minutes', 15 ) );
+		$buffer   = max( 0, (int) ( ks_booking_field( 'buffer_minutes', $service ) ?: 0 ) );
+		$step     = (int) ( ks_booking_field( 'slot_interval', $practitioner ) ?: ks_config( 'booking.time_step_minutes', 15 ) );
 
 		if ( $duration <= 0 || $step <= 0 || ! self::serves( $practitioner, $service ) ) {
 			return [];
@@ -106,7 +106,8 @@ class KS_Slot_Engine {
 
 	/** Working shifts for a weekday, from the practitioner's hours repeater. */
 	private static function shifts( int $practitioner, DateTimeImmutable $day ): array {
-		$hours   = get_field( 'working_hours', $practitioner ) ?: [];
+		$hours   = ks_booking_field( 'working_hours', $practitioner ) ?: [];
+		$hours   = is_array( $hours ) ? $hours : [];
 		$weekday = strtolower( $day->format( 'D' ) );   // mon, tue…
 		$shifts  = [];
 
@@ -136,8 +137,8 @@ class KS_Slot_Engine {
 		$blocks = [];
 
 		foreach ( $posts as $post ) {
-			$start = get_field( 'start_datetime', $post->ID );
-			$end   = get_field( 'end_datetime', $post->ID );
+			$start = ks_booking_field( 'start_datetime', $post->ID );
+			$end   = ks_booking_field( 'end_datetime', $post->ID );
 
 			if ( ! $start || ! $end ) {
 				continue;
@@ -177,15 +178,16 @@ class KS_Slot_Engine {
 	}
 
 	public static function duration( int $service ): int {
-		return (int) ( get_field( 'duration_minutes', $service ) ?: 0 );
+		return (int) ( ks_booking_field( 'duration_minutes', $service ) ?: 0 );
 	}
 
 	public static function price( int $service ): float {
-		return (float) ( get_field( 'price', $service ) ?: 0 );
+		return (float) ( ks_booking_field( 'price', $service ) ?: 0 );
 	}
 
 	public static function serves( int $practitioner, int $service ): bool {
-		$services = get_field( 'services', $practitioner ) ?: [];
+		$services = ks_booking_field( 'services', $practitioner ) ?: [];
+		$services = is_array( $services ) ? $services : [];
 		$ids      = array_map( fn( $s ) => is_object( $s ) ? $s->ID : (int) $s, $services );
 
 		return in_array( $service, $ids, true );

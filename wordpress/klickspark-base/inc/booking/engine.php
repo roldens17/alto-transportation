@@ -10,6 +10,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/** Read native seeded data or ACF-authored fields without requiring ACF to run a calendar. */
+function ks_booking_field( string $name, int $post_id ) {
+	if ( 'native' !== get_post_meta( $post_id, '_ks_booking_storage', true ) && function_exists( 'get_field' ) ) {
+		return get_field( $name, $post_id );
+	}
+	return get_post_meta( $post_id, $name, true );
+}
+
 class KS_Booking_Request {
 	public function __construct(
 		public int $from = 0,

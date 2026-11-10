@@ -7,6 +7,7 @@ function ks_booking_assert( bool $condition, string $message ): void {
 	}
 }
 ks_booking_assert( ! class_exists( 'WooCommerce' ) && ! function_exists( 'wc_price' ), 'Run this regression without WooCommerce' );
+ks_booking_assert( ! function_exists( 'get_field' ), 'Run this regression against native fields without an ACF shim' );
 ks_booking_assert( ks_module_enabled( 'booking' ) && 'none' === ks_config( 'booking.payment' ), 'No-payment config missing' );
 $routes = rest_get_server()->get_routes();
 ks_booking_assert( isset( $routes['/ks/v1/consultation'] ), 'Intake route missing' );

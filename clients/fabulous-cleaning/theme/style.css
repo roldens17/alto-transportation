@@ -55,3 +55,17 @@ body{background:var(--fc-cream);-webkit-font-smoothing:antialiased}
 .fc-quote-page .ks-quote-result{margin:0}
 .fc-quote-footnote{font-size:.83rem;line-height:1.7;color:var(--fc-muted);margin-top:24px}
 @media(max-width:650px){.fc-quote-page{padding:55px 18px 70px}.fc-quote-page .ks-quote-form{grid-template-columns:1fr;gap:18px}}
+
+/* Appointment requests share the cleaning site's visual identity. */
+.fc-booking-intro{padding-top:64px;padding-bottom:28px;max-width:850px}
+.fc-booking-intro h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(2.8rem,6vw,4.8rem);font-weight:500;margin:14px 0 20px;color:var(--fc-pine)}
+.fc-booking-intro p{line-height:1.8;max-width:65ch;color:var(--fc-muted)}
+.fc-booking-page{max-width:850px!important;margin:0 auto;padding:0 22px 80px;box-sizing:border-box}
+.fc-demo-notice{padding:16px 20px;background:var(--fc-mint);border-left:3px solid var(--fc-gold);border-radius:8px;font-size:.9rem;line-height:1.7}
+.fc-booking-page .ks-appt{background:#fff;padding:clamp(20px,4vw,40px);border:1px solid #e0e8df;border-radius:20px;box-shadow:var(--fc-shadow)}
+.fc-booking-page .ks-btn{padding:12px 22px;border:1px solid #9bad9e;border-radius:999px;font:inherit;color:var(--fc-pine);background:#fff;cursor:pointer;min-height:46px}
+.fc-booking-page .ks-btn--primary{background:var(--fc-pine);border-color:var(--fc-pine);color:#fff}
+.fc-booking-page .ks-btn:disabled{opacity:.45;cursor:not-allowed}
+.fc-booking-page .ks-slot{min-height:44px;min-width:60px}
+.fc-booking-page input:not([type=checkbox]),.fc-booking-page textarea,.fc-booking-page select{box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbdad1;border-radius:8px;font:inherit;min-height:46px;background:#fcfdfb}
+.fc-booking-page :is(button,input,select,textarea):focus-visible{outline:3px solid var(--fc-gold);outline-offset:3px}

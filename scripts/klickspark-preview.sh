@@ -55,7 +55,10 @@ if modules.get('quotes') is True or modules.get('payments') is True:
     raise SystemExit('Preview requires quotes and payments disabled in client YAML.')
 PY
 node generator/src/cli.mjs build "$client" --force
-"${compose[@]}" up -d db wordpress mailpit
+"${compose[@]}" up -d db mailpit
+# A forced build replaces the mounted child-theme directory. Refresh that bind
+# mount without replacing database or WordPress volumes.
+"${compose[@]}" up -d --force-recreate wordpress
 ready=0
 for i in $(seq 1 40); do
   if "${compose[@]}" run --rm -T wpcli core version >/dev/null 2>&1; then ready=1; break; fi
@@ -73,6 +76,9 @@ if [[ "$client" == "fabulous-cleaning" ]]; then
   "${compose[@]}" run --rm -T wpcli eval-file /opt/klickspark/seed.php
 else
   "${compose[@]}" run --rm -T wpcli eval-file /opt/klickspark/preview-seed.php
+fi
+if [[ "${KS_PREVIEW_BOOKING_DEMO:-0}" == "1" ]]; then
+  "${compose[@]}" run --rm -T -e KS_PREVIEW_BOOKING_DEMO=1 wpcli eval-file /opt/klickspark/preview-booking-seed.php
 fi
 echo "Preview: http://localhost:$KS_PORT"
 echo "Local-only; not deployed. Stop and delete isolated preview data with: bash scripts/klickspark-preview.sh stop $client"
