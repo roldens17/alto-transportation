@@ -54,14 +54,14 @@ Some existing docs were written during earlier phases and may be outdated. **Ver
 
 - PR #13 was merged on 2026-10-27. GitHub confirms all four pull-request workflows passed on its final commit `195e632`: regular CI, Generator, MariaDB Booking Integration and WordPress Runtime Smoke. The earlier “Quote module missing” blocker is resolved.
 - Quotes remain disabled by default. Production activation still requires the host-specific storage, privacy, retention and ingress checks in `docs/QUOTE-RELEASE-GATE.md` and explicit owner approval.
-- Current `main` is `2f95a11`, including safe opt-in scaffolding (#15) and the disposable local WordPress preview (#17).
+- PR #20 was squash-merged into `main` as `0b606ef` on 2026-11-10 after explicit owner authorization. All four workflows passed on its final code commit `8d2d53c`. Earlier milestones include safe opt-in scaffolding (#15) and the disposable local WordPress preview (#17).
 - Open PRs checked on 2026-11-10: onboarding playbook #14, setup wizard #16, private staging plan #18 and home-lab staging plan #19. They are separate from the booking corrections below.
 
-### Booking review corrections in progress
+### Booking review corrections merged (2026-11-10)
 
-Draft PR #20: https://github.com/roldens17/alto-transportation/pull/20
+Merged PR #20: https://github.com/roldens17/alto-transportation/pull/20
 
-Branch: `fix/booking-intake-review`. These changes are proposed, not merged or deployed:
+Source branch: `fix/booking-intake-review`. The following corrections are merged:
 
 1. Validate no-payment submissions against the same calendar as paid bookings, including published service/crew identity, assignments, working hours, time off and exact offered starts; reserve turnaround buffers.
 2. Honor the booking module switch during slot bootstrap, route registration and form rendering. Expose payment endpoints only when their mode and WooCommerce dependency are available.
@@ -69,9 +69,15 @@ Branch: `fix/booking-intake-review`. These changes are proposed, not merged or d
 4. Restrict enquiry access to administrators, including legacy published enquiries; create new enquiries as private records.
 5. Fall back to the administrator email when the business notification recipient is empty or invalid.
 
-Regression coverage is added to the WordPress runtime workflow, including separate processes for disabled booking and unavailable payment dependencies. Local generator tests pass; PHP/WordPress evidence must be checked in GitHub Actions before claiming these corrections verified. The local Docker engine was stopped during this work.
+Verified evidence: all four workflows passed on `8d2d53c`: application CI, Generator (including PHP lint and contract tests), MariaDB Booking Integration and WordPress Runtime Smoke. Runtime coverage includes disabled modules, unavailable payment dependencies, calendar bypass rejection, turnaround buffers, enquiry role permissions, failed-transition cleanup and default/custom/invalid notification recipients. Local generator tests also pass. CI uses a test-only post-meta adapter in place of licensed ACF Pro; actual ACF/host acceptance remains separate.
 
-The owner performs all merges. Booking production readiness also requires client-specific setup, licensed ACF integration, realistic browser/hosting checks and approval.
+### Local deployment verified (2026-11-10)
+
+The owner explicitly requested merge and deployment, then selected Docker on this computer. The merged source runs through `scripts/klickspark-preview.sh start fabulous-cleaning` in the isolated `klickspark-preview-fabulous-cleaning` Compose project. WordPress: `http://localhost:8091`; Mailpit: `http://localhost:8092`. The Fabulous Cleaning homepage rendered in the browser. Existing Docker volumes were preserved.
+
+Local credentials are generated in the workspace `.env` (mode 0600), excluded by `.gitignore`; never include their values in commits or logs. The admin username is `kslocal`. Draft seed content remains draft; quotes and payments are disabled. No public hosting, licensed ACF installation or customer-data migration was performed. The stack remains running for the owner. `stop` permanently deletes this preview's isolated volumes; do not stop/delete it without an explicit request.
+
+Future merges and deployments still require owner authorization. Booking production readiness requires client-specific setup, licensed ACF integration, realistic browser/hosting checks and approval.
 
 ## Local / CI commands
 

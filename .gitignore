@@ -4,6 +4,12 @@ dist-ssr
 *.local
 *.tsbuildinfo
 
+# Local credentials; keep only the documented examples in source control.
+.env
+.env.*
+!.env.example
+!.env.klickspark.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
