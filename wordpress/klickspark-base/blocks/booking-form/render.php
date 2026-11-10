@@ -8,6 +8,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! ks_module_enabled( 'booking' ) || 'route' !== ks_config( 'booking.mode' ) ) {
+	return;
+}
+
 $ks_id   = wp_unique_id( 'ks-booking-' );
 $ks_data = ks_booking_bootstrap_data();
 $ks_cfg  = $ks_data['config'];
@@ -82,7 +86,7 @@ $ks_min  = ( new DateTimeImmutable( "+{$ks_cfg['minLeadHours']} hours", wp_timez
 			<p class="ks-field ks-field--inline">
 				<label for="<?php echo esc_attr( $ks_id ); ?>-stops">Extra stops</label>
 				<input type="number" id="<?php echo esc_attr( $ks_id ); ?>-stops" name="stops" value="0" min="0" max="6">
-				<span class="ks-field__hint"><?php echo esc_html( sprintf( '%s each', strip_tags( wc_price( $ks_cfg['stopFee'] ) ) ) ); ?></span>
+				<span class="ks-field__hint"><?php echo esc_html( sprintf( '%s each', ks_format_booking_price( $ks_cfg['stopFee'] ) ) ); ?></span>
 			</p>
 		<?php endif; ?>
 

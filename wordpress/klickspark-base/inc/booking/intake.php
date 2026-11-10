@@ -14,7 +14,7 @@ require_once __DIR__ . '/store.php';
 class KS_Intake {
 
 	public static function init(): void {
-		if ( 'none' !== ks_config( 'booking.payment', 'woo' ) ) {
+		if ( ! ks_module_enabled( 'booking' ) || 'none' !== ks_config( 'booking.payment', 'woo' ) ) {
 			return;
 		}
 
@@ -31,7 +31,21 @@ class KS_Intake {
 			'show_in_rest' => false,
 			'menu_icon'    => 'dashicons-format-status',
 			'supports'     => [ 'title' ],
-			'capabilities' => [ 'create_posts' => 'do_not_allow' ],
+			// Include published capabilities to protect records from earlier versions too.
+			'capabilities' => [
+				'create_posts' => 'do_not_allow',
+				'read' => 'manage_options',
+				'edit_posts' => 'manage_options',
+				'edit_others_posts' => 'manage_options',
+				'edit_private_posts' => 'manage_options',
+				'edit_published_posts' => 'manage_options',
+				'read_private_posts' => 'manage_options',
+				'delete_posts' => 'manage_options',
+				'delete_others_posts' => 'manage_options',
+				'delete_private_posts' => 'manage_options',
+				'delete_published_posts' => 'manage_options',
+				'publish_posts' => 'manage_options',
+			],
 			'map_meta_cap' => true,
 		] );
 	}
@@ -155,9 +169,13 @@ class KS_Intake {
 		}
 
 		$start    = $booking->departs_at();
+		if ( ! KS_Slot_Engine::is_open( $booking->practitioner, $booking->service, $start ) ) {
+			return self::fail( [ 'date' => 'That time is no longer open. Pick another.' ] );
+		}
 		$duration = KS_Slot_Engine::duration( $booking->service );
+		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $booking->service ) ?: 0 ) );
 		$reservation_key = wp_generate_uuid4();
-		$hold     = KS_Slot_Store::hold( $booking->practitioner, $booking->service, $start, $duration, $reservation_key );
+		$hold     = KS_Slot_Store::hold( $booking->practitioner, $booking->service, $start, $duration + $buffer, $reservation_key );
 
 		if ( is_wp_error( $hold ) ) {
 			return self::fail( [ 'date' => $hold->get_error_message() ] );
@@ -165,7 +183,7 @@ class KS_Intake {
 
 		$enquiry_id = wp_insert_post( [
 			'post_type'   => 'ks_enquiry',
-			'post_status' => 'publish',
+			'post_status' => 'private',
 			'post_title'  => sprintf( '%s — %s', $name, get_the_title( $booking->service ) ),
 		] );
 
@@ -188,7 +206,9 @@ class KS_Intake {
 
 		// No-payment requests always require an explicit owner decision.
 		$needs_review = true;
-				if ( ! KS_Slot_Store::mark_pending( $hold ) ) {
+		if ( ! KS_Slot_Store::mark_pending( $hold ) ) {
+			wp_delete_post( $enquiry_id, true );
+			KS_Slot_Store::release( $reservation_key );
 			return self::fail( [ 'form' => 'We could not reserve that time. Please try again.' ], 503 );
 		}
 
@@ -270,8 +290,12 @@ class KS_Intake {
 			$internal[] = 'Awaiting owner approval: ' . admin_url( 'admin.php?page=ks-review-queue' );
 		}
 
+		$recipient = sanitize_email( (string) ks_config( 'booking.notify_email', '' ) );
+		if ( ! is_email( $recipient ) ) {
+			$recipient = get_option( 'admin_email' );
+		}
 		wp_mail(
-			ks_config( 'booking.notify_email', get_option( 'admin_email' ) ),
+			$recipient,
 			sprintf( '[%s] %s — %s', $pending ? 'Review' : 'Booked', $contact['name'], $what ),
 			implode( "\n", $internal )
 		);

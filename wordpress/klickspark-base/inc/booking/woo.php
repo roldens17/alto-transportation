@@ -14,7 +14,7 @@ class KS_Booking_Woo {
 	const CART_KEY = 'ks_booking';
 
 	public static function init(): void {
-		if ( ! ks_module_enabled( 'booking' ) || ! class_exists( 'WooCommerce' ) ) {
+		if ( ! ks_module_enabled( 'booking' ) || 'woo' !== ks_config( 'booking.payment', 'woo' ) || ! class_exists( 'WooCommerce' ) ) {
 			return;
 		}
 

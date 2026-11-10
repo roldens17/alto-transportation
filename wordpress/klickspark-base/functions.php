@@ -20,7 +20,7 @@ require_once KS_BASE_DIR . '/inc/booking/woo.php';
 require_once KS_BASE_DIR . '/inc/booking/rest.php';
 
 // Scheduling mode loads only when the client uses it.
-if ( 'slot' === ks_config( 'booking.mode' ) ) {
+if ( ks_module_enabled( 'booking' ) && 'slot' === ks_config( 'booking.mode' ) ) {
 	require_once KS_BASE_DIR . '/inc/booking/mode-slot.php';
 
 	// Payment gate: a cart, or an intake form with a review queue.

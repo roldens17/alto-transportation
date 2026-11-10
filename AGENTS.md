@@ -50,26 +50,28 @@ Some existing docs were written during earlier phases and may be outdated. **Ver
 - Prioritize premium visual quality, accessibility, mobile layouts, fast loading and maintainable modules.
 - The static Fabulous Cleaning preview has been published at https://roldens17.github.io/alto-transportation/fabulous-cleaning/ ; check whether it is still current before presenting it as the latest design.
 
-## Active work at time of writing (2026-10-26)
+## Verified status (2026-11-10)
 
-**Draft PR #13:** https://github.com/roldens17/alto-transportation/pull/13
+- PR #13 was merged on 2026-10-27. GitHub confirms all four pull-request workflows passed on its final commit `195e632`: regular CI, Generator, MariaDB Booking Integration and WordPress Runtime Smoke. The earlier “Quote module missing” blocker is resolved.
+- Quotes remain disabled by default. Production activation still requires the host-specific storage, privacy, retention and ingress checks in `docs/QUOTE-RELEASE-GATE.md` and explicit owner approval.
+- Current `main` is `2f95a11`, including safe opt-in scaffolding (#15) and the disposable local WordPress preview (#17).
+- Open PRs checked on 2026-11-10: onboarding playbook #14, setup wizard #16, private staging plan #18 and home-lab staging plan #19. They are separate from the booking corrections below.
 
-Branch: `feature/quote-request-engine`
+### Booking review corrections in progress
 
-Goal: private quote-request intake for service businesses, with customer contact/service/description, consent, limited photo uploads, admin-only review and no payment dependency.
+Draft PR #20: https://github.com/roldens17/alto-transportation/pull/20
 
-Implemented on this branch: `wordpress/klickspark-base/inc/quotes.php`, quote form/admin JavaScript, quote module config default-off, administrator-restricted quote capabilities, upload count limit, private photo storage and administrator download handler, plus new runtime smoke-test files.
+Branch: `fix/booking-intake-review`. These changes are proposed, not merged or deployed:
 
-**Do not merge PR #13 yet.** At the last confirmed check, the new `KlickSpark WordPress Runtime Smoke` step failed with **“Quote module missing”**. Regular CI, generator and MariaDB checks passed. A later diagnostic commit was pushed but its outcome had not been verified at the time this handoff was authored.
+1. Validate no-payment submissions against the same calendar as paid bookings, including published service/crew identity, assignments, working hours, time off and exact offered starts; reserve turnaround buffers.
+2. Honor the booking module switch during slot bootstrap, route registration and form rendering. Expose payment endpoints only when their mode and WooCommerce dependency are available.
+3. Render priced no-payment appointments without WooCommerce and remove inappropriate payment dependency notices.
+4. Restrict enquiry access to administrators, including legacy published enquiries; create new enquiries as private records.
+5. Fall back to the administrator email when the business notification recipient is empty or invalid.
 
-### Immediate next actions
+Regression coverage is added to the WordPress runtime workflow, including separate processes for disabled booking and unavailable payment dependencies. Local generator tests pass; PHP/WordPress evidence must be checked in GitHub Actions before claiming these corrections verified. The local Docker engine was stopped during this work.
 
-1. Check latest PR #13 GitHub Actions results and logs.
-2. Diagnose why `KS_Quotes` is not loaded in WP-CLI runtime, even when `ks_module_enabled('quotes')` is true. Verify theme bootstrap, active parent/child theme, and initialization timing. Inspect `wordpress/klickspark-base/functions.php`, `inc/quotes.php`, `inc/config.php`, and `tests/php/quote-ci-enable.php`.
-3. Fix the cause, not just the test assertion. Re-run the WordPress smoke test.
-4. Audit quote intake and photo security: admin-only permissions, unauthorized download denial, MIME/file-size/count validation, filesystem isolation, retention and deletion cleanup, nonce/CSRF behavior, rate limiting and failure cleanup.
-5. Add or improve realistic runtime tests for these cases. Mark PR ready only when checks and review are satisfactory; **owner performs merge**.
-6. After #13, plan the next unified client-facing business administration experience and further premium design improvements.
+The owner performs all merges. Booking production readiness also requires client-specific setup, licensed ACF integration, realistic browser/hosting checks and approval.
 
 ## Local / CI commands
 
@@ -101,7 +103,7 @@ Required for generator: Node.js 22, Python 3, PyYAML 6.0.3. WordPress stack uses
 
 ## Suggested prompt for the next AI agent
 
-> You are continuing KlickSpark Website Factory in `roldens17/alto-transportation`. Read `AGENTS.md` and the current open PRs. I work from an iPhone; implement changes directly through GitHub and CI where possible. Never merge or deploy without my explicit approval. First verify PR #13's current status and fix any failing WordPress quote runtime tests, then continue security and quality hardening. Give me direct PR links and truthful test results.
+> You are continuing KlickSpark Website Factory in `roldens17/alto-transportation`. Read `AGENTS.md` and the current open PRs. I work from an iPhone; implement changes directly through GitHub and CI where possible. Never merge or deploy without my explicit approval. First check the current booking-fix PR and its GitHub Actions results, then continue security and quality hardening. Give me direct PR links and truthful test results.
 
 ## Maintenance rule
 

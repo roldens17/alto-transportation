@@ -2,13 +2,13 @@
 /**
  * REST endpoints the booking form talks to.
  *
- * Public routes, so they are read-only and rate-limited by nonce on write.
+ * Public route-mode endpoints. Writes require a nonce; this is not a rate limiter.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'rest_api_init', function () {
-	if ( ! ks_module_enabled( 'booking' ) ) {
+	if ( ! ks_module_enabled( 'booking' ) || 'route' !== ks_config( 'booking.mode' ) ) {
 		return;
 	}
 
@@ -60,6 +60,9 @@ add_action( 'rest_api_init', function () {
 		},
 	] );
 
+	if ( 'woo' !== ks_config( 'booking.payment', 'woo' ) || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
 	register_rest_route( 'ks/v1', '/booking', [
 		'methods'             => 'POST',
 		'permission_callback' => '__return_true',

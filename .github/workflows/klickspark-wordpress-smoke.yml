@@ -4,6 +4,7 @@ on:
     paths:
       - 'wordpress/**'
       - 'tests/http/**'
+      - 'tests/php/**'
       - 'generator/**'
       - 'clients/**'
       - 'scripts/klickspark-provision.sh'
@@ -50,6 +51,18 @@ jobs:
           docker compose --env-file .env -f docker-compose.klickspark.yml cp tests/php/quote-intake-smoke.php wordpress:/var/www/html/wp-content/quote-intake-smoke.php
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval 'if (!ks_module_enabled("quotes")) { fwrite(STDERR, "Quote module config disabled\\n"); exit(1); }'
           docker compose --env-file .env -f docker-compose.klickspark.yml run --rm -T wpcli eval-file /var/www/html/wp-content/quote-intake-smoke.php
+      - name: Test booking isolation and no-payment intake in real WordPress
+        run: |
+          compose=(docker compose --env-file .env -f docker-compose.klickspark.yml)
+          "${compose[@]}" cp tests/php/booking-ci-config.php wordpress:/var/www/html/wp-content/mu-plugins/booking-ci-config.php
+          "${compose[@]}" cp tests/php/booking-disabled-smoke.php wordpress:/var/www/html/wp-content/booking-disabled-smoke.php
+          "${compose[@]}" cp tests/php/booking-intake-smoke.php wordpress:/var/www/html/wp-content/booking-intake-smoke.php
+          "${compose[@]}" run --rm -T -e KS_BOOKING_CI=1 -e KS_BOOKING_CI_DISABLED=1 wpcli eval-file /var/www/html/wp-content/booking-disabled-smoke.php
+          "${compose[@]}" run --rm -T -e KS_BOOKING_CI=1 -e KS_BOOKING_CI_PAYMENT=woo wpcli eval-file /var/www/html/wp-content/booking-disabled-smoke.php
+          "${compose[@]}" run --rm -T -e KS_BOOKING_CI=1 -e KS_BOOKING_CI_MODE=route -e KS_BOOKING_CI_PAYMENT=woo wpcli eval-file /var/www/html/wp-content/booking-disabled-smoke.php
+          for recipient in '' 'booking-office@example.test' 'invalid-address'; do
+            "${compose[@]}" run --rm -T -e KS_BOOKING_CI=1 -e KS_BOOKING_CI_NOTIFY="$recipient" wpcli eval-file /var/www/html/wp-content/booking-intake-smoke.php
+          done
       - name: Test real HTTP quote photo upload and cleanup
         run: bash tests/http/quote-upload-smoke.sh
       - name: Fetch actual homepage HTML

@@ -14,7 +14,7 @@ class KS_Review_Queue {
 	const SLUG = 'ks-review-queue';
 
 	public static function init(): void {
-		if ( 'none' !== ks_config( 'booking.payment', 'woo' ) && ! ks_config( 'booking.conflict_check', false ) ) {
+		if ( ! ks_module_enabled( 'booking' ) || ( 'none' !== ks_config( 'booking.payment', 'woo' ) && ! ks_config( 'booking.conflict_check', false ) ) ) {
 			return;
 		}
 

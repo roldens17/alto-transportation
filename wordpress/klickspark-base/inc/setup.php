@@ -8,7 +8,7 @@ add_action( 'after_setup_theme', function () {
 	add_theme_support( 'post-thumbnails' );
 	add_theme_support( 'html5', [ 'search-form', 'gallery', 'caption', 'style', 'script' ] );
 
-	if ( ks_module_enabled( 'booking' ) ) {
+	if ( ks_module_enabled( 'booking' ) && 'woo' === ks_config( 'booking.payment', 'woo' ) ) {
 		add_theme_support( 'woocommerce' );
 		add_theme_support( 'wc-product-gallery-lightbox' );
 		add_theme_support( 'wc-product-gallery-zoom' );
@@ -40,10 +40,10 @@ add_action( 'admin_notices', function () {
 	if ( ! class_exists( 'ACF' ) ) {
 		$missing[] = 'Advanced Custom Fields Pro';
 	}
-	if ( ks_module_enabled( 'booking' ) && ! class_exists( 'WooCommerce' ) ) {
+	if ( ks_module_enabled( 'booking' ) && 'woo' === ks_config( 'booking.payment', 'woo' ) && ! class_exists( 'WooCommerce' ) ) {
 		$missing[] = 'WooCommerce';
 	}
-	if ( ks_module_enabled( 'booking' ) && ! ks_config( 'booking.product_id' ) ) {
+	if ( ks_module_enabled( 'booking' ) && 'woo' === ks_config( 'booking.payment', 'woo' ) && ! ks_config( 'booking.product_id' ) ) {
 		$missing[] = 'a booking container product ID in config.php';
 	}
 	if ( $missing ) {

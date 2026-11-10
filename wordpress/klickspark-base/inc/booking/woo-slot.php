@@ -13,7 +13,7 @@ class KS_Slot_Woo {
 	const CART_KEY = 'ks_appointment';
 
 	public static function init(): void {
-		if ( 'slot' !== ks_config( 'booking.mode' ) || ! class_exists( 'WooCommerce' ) ) {
+		if ( ! ks_module_enabled( 'booking' ) || 'slot' !== ks_config( 'booking.mode' ) || 'woo' !== ks_config( 'booking.payment', 'woo' ) || ! class_exists( 'WooCommerce' ) ) {
 			return;
 		}
 
@@ -60,7 +60,7 @@ class KS_Slot_Woo {
 
 		$start = $request->departs_at();
 
-		if ( ! self::is_open( $request, $start ) ) {
+		if ( ! KS_Slot_Engine::is_open( $request->practitioner, $request->service, $start ) ) {
 			return new WP_Error( 'date', 'That time is no longer open. Pick another.' );
 		}
 
@@ -98,19 +98,6 @@ class KS_Slot_Woo {
 		}
 
 		return $added;
-	}
-
-	/** Is this exact start still offered by the availability engine? */
-	private static function is_open( KS_Booking_Request $r, DateTimeImmutable $start ): bool {
-		$slots = KS_Slot_Engine::slots_for_day( $r->practitioner, $r->service, $start->setTime( 0, 0 ) );
-
-		foreach ( $slots as $slot ) {
-			if ( $slot->format( 'Y-m-d H:i' ) === $start->format( 'Y-m-d H:i' ) ) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	public static function unique_line( array $data, int $product_id ): array {

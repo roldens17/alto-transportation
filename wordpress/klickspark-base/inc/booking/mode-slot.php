@@ -12,6 +12,20 @@ defined( 'ABSPATH' ) || exit;
 require_once __DIR__ . '/store.php';
 
 class KS_Slot_Engine {
+	/** Validate submitted starts against the same calendar offered to visitors. */
+	public static function is_open( int $practitioner, int $service, DateTimeImmutable $start ): bool {
+		if ( 'ks_service' !== get_post_type( $service ) || 'publish' !== get_post_status( $service )
+			|| 'ks_practitioner' !== get_post_type( $practitioner ) || 'publish' !== get_post_status( $practitioner ) ) {
+			return false;
+		}
+		$start = $start->setTimezone( wp_timezone() );
+		foreach ( self::slots_for_day( $practitioner, $service, $start->setTime( 0, 0 ) ) as $slot ) {
+			if ( $slot->getTimestamp() === $start->getTimestamp() ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Open start times for one practitioner on one date, in site time.
@@ -20,10 +34,10 @@ class KS_Slot_Engine {
 	 */
 	public static function slots_for_day( int $practitioner, int $service, DateTimeImmutable $day ): array {
 		$duration = self::duration( $service );
-		$buffer   = (int) ( get_field( 'buffer_minutes', $service ) ?: 0 );
+		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $service ) ?: 0 ) );
 		$step     = (int) ( get_field( 'slot_interval', $practitioner ) ?: ks_config( 'booking.time_step_minutes', 15 ) );
 
-		if ( ! $duration || ! self::serves( $practitioner, $service ) ) {
+		if ( $duration <= 0 || $step <= 0 || ! self::serves( $practitioner, $service ) ) {
 			return [];
 		}
 
@@ -249,7 +263,7 @@ add_action( 'acf/init', function () {
  * Availability + appointment endpoints.
  */
 add_action( 'rest_api_init', function () {
-	if ( 'slot' !== ks_config( 'booking.mode' ) ) {
+	if ( ! ks_module_enabled( 'booking' ) || 'slot' !== ks_config( 'booking.mode' ) ) {
 		return;
 	}
 
@@ -284,6 +298,10 @@ add_action( 'rest_api_init', function () {
 		},
 	] );
 
+	// Paid endpoints must not exist on no-payment sites or without WooCommerce.
+	if ( 'woo' !== ks_config( 'booking.payment', 'woo' ) || ! class_exists( 'WooCommerce' ) || ! class_exists( 'KS_Slot_Woo' ) ) {
+		return;
+	}
 	register_rest_route( 'ks/v1', '/appointment', [
 		'methods'             => 'POST',
 		'permission_callback' => '__return_true',
