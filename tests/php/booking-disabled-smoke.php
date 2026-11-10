@@ -34,4 +34,10 @@ if ( ! $enabled ) {
 } elseif ( $slot && ! isset( $routes['/ks/v1/availability'] ) ) {
 	throw new RuntimeException( 'Enabled slot availability route missing' );
 }
+if ( $enabled && ! $slot ) {
+	$rendered = do_blocks( '<!-- wp:ks/booking-form {"showStops":true} /-->' );
+	if ( ! str_contains( $rendered, 'USD 15.00 each' ) ) {
+		throw new RuntimeException( 'Route price display failed without WooCommerce' );
+	}
+}
 echo "Booking route isolation checks passed\n";

@@ -28,7 +28,7 @@ Build output: `generated/fabulous-cleaning/wp-content/themes/fabulous-cleaning/`
 
 ## Important restrictions
 
-**Not yet production ready.** The generated booking template uses the existing `ks/appointment-picker` block, which does not yet support cleaning-specific property details, address validation, extras or dynamically calculated prices. The source slot booking engine still needs concurrency and buffer fixes. Booking and payment must not be advertised as live until those features are implemented and tested.
+**Not yet production ready.** The generated booking template uses the existing `ks/appointment-picker` block, which does not yet support cleaning-specific property details, address validation, extras or dynamically calculated prices. Slot storage uses per-resource advisory locks; submitted appointments must match the offered calendar and reserve their turnaround buffer. Check the current WordPress and MariaDB CI results for regression evidence. Booking and payment must not be advertised as live without client-specific setup and end-to-end acceptance.
 
 The generator does not install WordPress, create pages or WooCommerce products, seed crews/services, configure payment gateways, or deploy to staging/production. `ks dev`, `ks deploy`, `ks verify` and `ks rollback` deliberately return an error. A future milestone should replace the Python YAML bootstrap with a locked Node parser and full JSON Schema.
 

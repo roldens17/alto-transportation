@@ -11,6 +11,8 @@ add_filter( 'ks/config', static function ( array $config ): array {
 	$config['booking']['min_lead_hours'] = 0;
 	$config['booking']['max_days_ahead'] = 60;
 	$config['booking']['time_step_minutes'] = 30;
+	$config['booking']['allow_stops'] = true;
+	$config['booking']['stop_fee'] = 15;
 	$config['booking']['notify_email'] = getenv( 'KS_BOOKING_CI_NOTIFY' ) ?: '';
 	return $config;
 } );
