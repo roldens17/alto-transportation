@@ -114,3 +114,12 @@ Required for generator: Node.js 22, Python 3, PyYAML 6.0.3. WordPress stack uses
 ## Maintenance rule
 
 **Update this handoff whenever an important PR is merged, a milestone changes, a new deployment workflow is introduced or an important blocker is resolved.** Date the update and distinguish verified status from planned work.
+
+
+## Fabulous Glow Cleaning client starter (2026-11-10)
+
+The owner requested a new client site named Fabulous Glow Cleaning. Source is `clients/fabulous-glow-cleaning/`, using the cleaning preset with provisional plum/gold branding. Booking, quotes and payments are explicitly disabled. The homepage is a branded coming-soon draft with no invented contact details, service scope, prices, testimonials or availability.
+
+Verified local preview: `http://localhost:8093/`; administrator: `http://localhost:8093/wp-admin/`; Mailpit: `http://localhost:8094/`. Compose project: `klickspark-preview-fabulous-glow-cleaning`, with its own database/site/private volumes. The original Fabulous Cleaning project stays on 8091/8092. Local WordPress title and timezone were set to Fabulous Glow Cleaning and America/New_York. Both local installations currently use the workspace .env credentials (not committed). Preserve their volumes unless deletion is explicitly requested.
+
+New client configuration validation and generated-artifact checksum verification passed, and the homepage rendered in the browser. The client source is proposed on `client/fabulous-glow-cleaning`; check its PR for GitHub CI status. Generic Home, Services, About, Contact and Privacy seed pages remain drafts. Service details, approved branding, contact information and any booking configuration are future work; this is not a public production launch.
