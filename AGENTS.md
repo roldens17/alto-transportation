@@ -75,7 +75,7 @@ Verified evidence: all four workflows passed on `8d2d53c`: application CI, Gener
 
 The owner explicitly requested merge and deployment, then selected Docker on this computer. The merged source runs through `scripts/klickspark-preview.sh start fabulous-cleaning` in the isolated `klickspark-preview-fabulous-cleaning` Compose project. WordPress: `http://localhost:8091`; Mailpit: `http://localhost:8092`. The Fabulous Cleaning homepage rendered in the browser. Existing Docker volumes were preserved.
 
-Local credentials are generated in the workspace `.env` (mode 0600), excluded by `.gitignore`; never include their values in commits or logs. The admin username is `kslocal`. Draft seed content remains draft; quotes and payments are disabled. No public hosting, licensed ACF installation or customer-data migration was performed. The stack remains running for the owner. `stop` permanently deletes this preview's isolated volumes; do not stop/delete it without an explicit request.
+Local credentials are generated in the workspace `.env` (mode 0600), excluded by `.gitignore`; never include their values in commits or logs. The admin username is `kslocal`. The standard seed keeps content in draft; quotes and payments are disabled. No public hosting, licensed ACF installation or customer-data migration was performed. The stack remains running for the owner. `stop` permanently deletes this preview's isolated volumes; do not stop/delete it without an explicit request.
 
 Future merges and deployments still require owner authorization. Booking production readiness requires client-specific setup, licensed ACF integration, realistic browser/hosting checks and approval.
 
@@ -114,3 +114,12 @@ Required for generator: Node.js 22, Python 3, PyYAML 6.0.3. WordPress stack uses
 ## Maintenance rule
 
 **Update this handoff whenever an important PR is merged, a milestone changes, a new deployment workflow is introduced or an important blocker is resolved.** Date the update and distinguish verified status from planned work.
+
+
+## Local booking visibility work (2026-11-10)
+
+The owner reported booking was not visible. The prior local preview had no homepage booking link, a draft booking page, draft services, no crew calendar and no ACF. Branch `fix/local-booking-preview` adds homepage navigation, a branded booking template, native WordPress metadata reads for scheduling (preserving ACF reads for ACF-authored records), and explicit `KS_PREVIEW_BOOKING_DEMO=1` loopback-only sample data. The default preview/provision seed remains draft-only. Rebuilt theme mounts are refreshed by recreating the WordPress container while preserving volumes. These changes are local/proposed until their PR is merged; do not assume the previous merge authorization covers new PRs.
+
+Use only test contact details in the local booking demo. Do not delete the preview volumes without an explicit request. Check the new PR's final CI results and recorded browser evidence before making readiness claims.
+
+Local browser evidence: selected Standard Cleaning (Demo), loaded real availability, and submitted `Demo Booking Test` using an example.test email. The UI returned a pending-approval receipt. A separate read checks the private enquiry and 90-minute buffered pending reservation. Sample records are retained in the isolated local preview for review; no real appointment was arranged. Local generator, PHP field compatibility, slot locking and checkout-hold checks passed. GitHub CI for this branch must still be checked.

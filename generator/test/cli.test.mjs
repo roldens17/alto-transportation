@@ -25,6 +25,12 @@ test('builds deterministic child theme and preserves output by default', () => {
   const clientConfig = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/config.php'),'utf8');
   assert.match(clientConfig,/"payment": "none"/);
   assert.match(clientConfig,/"booking": true/);
+  const bookingTemplate = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/templates/page-booking.html'),'utf8');
+  assert.match(bookingTemplate,/wp:ks\/appointment-picker/);
+  assert.match(bookingTemplate,/"personLabel":"Cleaning team"/);
+  assert.match(bookingTemplate,/No payment is collected/);
+  const homepage = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/templates/front-page.html'),'utf8');
+  assert.match(homepage,/href="\/booking\/">Booking/);
   const quoteTemplate = fs.readFileSync(path.join(output,'wp-content/themes/fabulous-cleaning/templates/page-quote-request.html'),'utf8');
   assert.match(quoteTemplate,/\[klickspark_quote_form services=/);
   assert.match(quoteTemplate,/Standard Cleaning\|Deep Cleaning\|Move-In \/ Move-Out/);
@@ -32,6 +38,7 @@ test('builds deterministic child theme and preserves output by default', () => {
   assert.match(css,/\.fc-quote-page/);
   const builtManifest = JSON.parse(manifest);
   assert.ok(builtManifest.files['wp-content/themes/fabulous-cleaning/templates/page-quote-request.html']);
+  assert.ok(builtManifest.files['wp-content/themes/fabulous-cleaning/templates/page-booking.html']);
   const second = run('build','fabulous-cleaning');
   assert.notEqual(second.status, 0);
   const third = run('build','fabulous-cleaning','--force');

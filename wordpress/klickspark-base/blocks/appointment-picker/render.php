@@ -58,8 +58,8 @@ $ks_boot = [
 	<div class="ks-appt__step" data-step="service">
 		<div class="ks-appt__cards">
 			<?php foreach ( $ks_services as $ks_service ) :
-				$ks_duration = (int) get_field( 'duration_minutes', $ks_service->ID );
-				$ks_price    = (float) get_field( 'price', $ks_service->ID );
+				$ks_duration = (int) ks_booking_field( 'duration_minutes', $ks_service->ID );
+				$ks_price    = (float) ks_booking_field( 'price', $ks_service->ID );
 				?>
 				<button
 					type="button"
@@ -98,7 +98,7 @@ $ks_boot = [
 						<?php echo get_the_post_thumbnail( $ks_person, 'thumbnail', [ 'class' => 'ks-card__avatar', 'alt' => '' ] ); ?>
 					<?php endif; ?>
 					<span class="ks-card__name"><?php echo esc_html( get_the_title( $ks_person ) ); ?></span>
-					<span class="ks-card__meta"><?php echo esc_html( (string) get_field( 'credentials', $ks_person->ID ) ); ?></span>
+					<span class="ks-card__meta"><?php echo esc_html( (string) ks_booking_field( 'credentials', $ks_person->ID ) ); ?></span>
 				</button>
 			<?php endforeach; ?>
 		</div>

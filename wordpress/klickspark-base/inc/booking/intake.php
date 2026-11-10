@@ -97,7 +97,8 @@ class KS_Intake {
 	}
 
 	public static function questions( int $service ): array {
-		$rows = get_field( 'intake_questions', $service ) ?: [];
+		$rows = ks_booking_field( 'intake_questions', $service ) ?: [];
+		$rows = is_array( $rows ) ? $rows : [];
 		$out  = [];
 
 		foreach ( $rows as $index => $row ) {
@@ -173,7 +174,7 @@ class KS_Intake {
 			return self::fail( [ 'date' => 'That time is no longer open. Pick another.' ] );
 		}
 		$duration = KS_Slot_Engine::duration( $booking->service );
-		$buffer   = max( 0, (int) ( get_field( 'buffer_minutes', $booking->service ) ?: 0 ) );
+		$buffer   = max( 0, (int) ( ks_booking_field( 'buffer_minutes', $booking->service ) ?: 0 ) );
 		$reservation_key = wp_generate_uuid4();
 		$hold     = KS_Slot_Store::hold( $booking->practitioner, $booking->service, $start, $duration + $buffer, $reservation_key );
 
