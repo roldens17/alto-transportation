@@ -8,6 +8,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! ks_module_enabled( 'booking' ) || 'slot' !== ks_config( 'booking.mode' ) ) {
+	return;
+}
+
 $ks_id       = wp_unique_id( 'ks-appt-' );
 $ks_services = get_posts( [ 'post_type' => 'ks_service', 'posts_per_page' => -1, 'orderby' => 'menu_order title', 'order' => 'ASC' ] );
 
@@ -67,7 +71,7 @@ $ks_boot = [
 					<span class="ks-card__meta">
 						<span class="ks-num"><?php echo esc_html( $ks_duration ); ?></span> min
 						<?php if ( $ks_price ) : ?>
-							· <span class="ks-num"><?php echo esc_html( strip_tags( wc_price( $ks_price ) ) ); ?></span>
+							· <span class="ks-num"><?php echo esc_html( ks_format_booking_price( $ks_price ) ); ?></span>
 						<?php endif; ?>
 					</span>
 					<?php if ( $ks_service->post_excerpt ) : ?>
